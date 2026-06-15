@@ -60,7 +60,8 @@
         },
         funnel: {
             direction: 'vertical',
-            flip: false
+            flip: false,
+            mode: 'funnel'
         },
         highlight: false,
         animate: true,
@@ -185,10 +186,21 @@
             }
         }
 
+        // The trapezoid variant is a funnel whose silhouette has straight sides (edges interpolate
+        // linearly by position) instead of following each value. It is selected via
+        // funnel.mode:'trapezoid'; top-level type:'trapezoid' is a convenience alias that maps to
+        // type:'funnel' + funnel.mode:'trapezoid'. Both share all funnel layout/CSS/sizing — only
+        // the per-band clip-path differs, gated by isTrapezoid below.
+        if (config.type === 'trapezoid') {
+            config.type = 'funnel';
+            config.funnel.mode = 'trapezoid';
+        }
+        var isTrapezoid = config.type === 'funnel' && config.funnel.mode === 'trapezoid';
+
         var series = config.data.series;
         var render = config.data.render;
         var type = config.type;
-        var validTypes = ['column', 'bar', 'line', 'area', 'progress', 'waterfall', 'gauge', 'heatmap', 'treemap', 'pie', 'bullet', 'funnel'];
+        var validTypes = ['column', 'bar', 'line', 'area', 'progress', 'waterfall', 'gauge', 'heatmap', 'treemap', 'pie', 'bullet', 'funnel', 'trapezoid'];
 
         // Warn on common misconfigurations
         if (validTypes.indexOf(type) === -1) {
@@ -1050,15 +1062,30 @@
             var isHorizontal = config.funnel.direction === 'horizontal';
             var len = serie.values.length;
 
-            // Each band is a trapezoid: leading edge = this value's width, trailing edge =
-            // next value's width. Neighbouring edges share a width, so the funnel is continuous.
+            // Edge width (%) at band boundary `p` (0 = leading edge of the first band ... len =
+            // trailing edge of the last band). Funnel: each boundary follows its own value, so the
+            // silhouette steps with the data. Trapezoid: boundaries interpolate linearly between
+            // the first and last value widths, giving perfectly straight sides regardless of the
+            // middle values.
+            var firstW = Math.max(0, serie.values[0]) / funnelMax * 100;
+            var lastW = Math.max(0, serie.values[len - 1]) / funnelMax * 100;
+            function edgeWidth(p) {
+                if (isTrapezoid) {
+                    return len > 0 ? firstW + (lastW - firstW) * (p / len) : firstW;
+                }
+                // Funnel: boundary p sits between band p-1 and band p; use value at index p
+                // (clamped to the last value so the final band ends flat at its own width).
+                var idx = Math.min(p, len - 1);
+                return Math.max(0, serie.values[idx]) / funnelMax * 100;
+            }
+
+            // Each band is a trapezoid spanning boundaries i (leading) and i+1 (trailing).
+            // Neighbouring bands share a boundary width, so the shape stays continuous.
             // The `flip` option mirrors the whole plot (wide base / reverse flow) via CSS, which
             // keeps edges aligned — see the .is-funnel-flipped rules.
             for (var i = 0; i < len; i++) {
-                var val = Math.max(0, serie.values[i]);
-                var nextVal = i < len - 1 ? Math.max(0, serie.values[i + 1]) : val;
-                var w = val / funnelMax * 100;
-                var nextW = nextVal / funnelMax * 100;
+                var w = edgeWidth(i);
+                var nextW = edgeWidth(i + 1);
 
                 var startOff = (100 - w) / 2;
                 var endOff = (100 - nextW) / 2;

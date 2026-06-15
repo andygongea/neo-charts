@@ -245,7 +245,7 @@
                 key: 'funnel', name: 'Funnel',
                 config: {
                     title: { text: 'Sales Pipeline', align: 'center' },
-                    type: 'funnel', funnel: { direction: 'vertical', flip: false },
+                    type: 'funnel', funnel: { direction: 'vertical', flip: false, mode: 'funnel' },
                     layout: { width: '100%', height: '260px' },
                     data: { series: [{ title: 'Pipeline', values: [1200, 800, 400, 120], labels: ['Visitors','Leads','Opportunities','Deals'], color: ['#6b7280','#3b82f6','#f59e0b','#10b981'], decimals: 0 }] }
                 }
@@ -308,6 +308,7 @@
                         range('Inner radius (0 = pie, 60+ = donut)', 'pie.innerRadius', 0, 90, 1)],
             bullet:    [toggle('Animate', 'animate'), toggle('Highlight', 'highlight')],
             funnel:    [toggle('Animate', 'animate'),
+                        select('Shape', 'funnel.mode', ['funnel', 'trapezoid']),
                         select('Direction', 'funnel.direction', ['vertical', 'horizontal']),
                         toggle('Flip (wide base / reverse)', 'funnel.flip')]
         };
@@ -315,7 +316,7 @@
         // Mirrors the library's renderLegend logic: would a legend actually appear?
         function legendWouldShow(cfg) {
             var type = cfg.type;
-            if (type === 'gauge' || type === 'treemap' || type === 'heatmap' || type === 'funnel' || type === 'bullet') return false;
+            if (type === 'gauge' || type === 'treemap' || type === 'heatmap' || type === 'funnel' || type === 'trapezoid' || type === 'bullet') return false;
             var series = (cfg.data && cfg.data.series) || [];
             if (type === 'pie') return series.length > 0;
             var stacked = cfg.data && cfg.data.render && cfg.data.render.stacked;
@@ -350,7 +351,10 @@
 
                 var title = document.createElement('div');
                 title.className = 'row-title';
-                title.textContent = t.name + '  —  type: \'' + t.key + '\'';
+                // Show the real type; the trapezoid row is type:'funnel' with funnel.mode:'trapezoid'.
+                var typeLabel = t.config.type;
+                if (t.config.funnel && t.config.funnel.mode === 'trapezoid') typeLabel += " · mode:'trapezoid'";
+                title.textContent = t.name + '  —  type: \'' + typeLabel + '\'';
                 row.appendChild(title);
 
                 var grid = document.createElement('div');

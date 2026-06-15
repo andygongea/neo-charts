@@ -11,7 +11,7 @@ Lightweight HTML/CSS chart library with zero dependencies. No SVG, no Canvas —
 - **Animated** — entry animations and smooth hover transitions
 - **Interactive** — tooltips on hover, highlight mode with bidirectional label sync (bar/waterfall)
 - **Configurable** — gap between items, gauge thickness, default color palette, light/dark themes
-- **12 chart types** — column, bar, line, area, progress, waterfall, heatmap, treemap, gauge, pie (with donut variant), bullet, funnel
+- **12 chart types** — column, bar, line, area, progress, waterfall, heatmap, treemap, gauge, pie (with donut variant), bullet, funnel (with trapezoid variant)
 - **Multi-series** — grouped and stacked modes for column and bar charts
 
 ## Installation
@@ -346,6 +346,7 @@ Two layout options control orientation:
 
 - **`funnel.direction`** — `'vertical'` (default) or `'horizontal'` (left → right flow).
 - **`funnel.flip`** — `false` (default) or `true` to mirror the flow axis. Flipping a vertical funnel produces a **pyramid** (narrow top, wide base); flipping a horizontal funnel reverses it to right → left.
+- **`funnel.mode`** — `'funnel'` (default) or `'trapezoid'`. The **trapezoid** mode gives the chart **straight sides**: the silhouette runs in a straight line from the first value's width to the last value's width (intermediate values set each band's color but not the outline). It honors `funnel.direction` and `funnel.flip` exactly like the default mode. As a convenience, **`type: 'trapezoid'`** is accepted as an alias for `type: 'funnel'` with `funnel.mode: 'trapezoid'`.
 
 ```js
 neoCharts('.chart', {
@@ -365,13 +366,14 @@ neoCharts('.chart', {
 
 // Pyramid (wide base):  funnel: { flip: true }
 // Horizontal funnel:     funnel: { direction: 'horizontal' }
+// Straight-sided shape:  funnel: { mode: 'trapezoid' }  (or type: 'trapezoid')
 ```
 
 ## Options Reference
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `type` | string | `'column'` | Chart type: `column`, `bar`, `progress`, `waterfall`, `line`, `area`, `heatmap`, `treemap`, `gauge`, `pie`, `bullet`, `funnel`. (`donut` is accepted as an alias for `pie` with `innerRadius: 60`.) |
+| `type` | string | `'column'` | Chart type: `column`, `bar`, `progress`, `waterfall`, `line`, `area`, `heatmap`, `treemap`, `gauge`, `pie`, `bullet`, `funnel`. (`donut` is an alias for `pie` with `innerRadius: 60`; `trapezoid` is an alias for `funnel` with `funnel.mode: 'trapezoid'`.) |
 | `cssClass` | string | `''` | Additional CSS class on the chart container |
 | `highlight` | boolean | `false` | Dim sibling items on hover (bidirectional for bar/waterfall labels) |
 | `animate` | boolean | `true` | Animate items on initial render |
@@ -387,6 +389,7 @@ neoCharts('.chart', {
 | `bullet.ranges` | array | `[]` | Qualitative range boundaries (absolute values). Auto-generated if empty |
 | `funnel.direction` | string | `'vertical'` | Funnel flow direction: `'vertical'` or `'horizontal'` |
 | `funnel.flip` | boolean | `false` | Mirror the funnel's flow axis. Vertical + flip = pyramid (wide base); horizontal + flip = right → left |
+| `funnel.mode` | string | `'funnel'` | Funnel shape: `'funnel'` (value-stepped) or `'trapezoid'` (straight sides). `type: 'trapezoid'` is an alias for `funnel.mode: 'trapezoid'` |
 | `title.text` | string | `'Neo Charts'` | Chart title text |
 | `title.subtitle` | string | `''` | Subtitle text below the title |
 | `title.align` | string | `'right'` | Title alignment: `left`, `center`, `right` |

@@ -210,19 +210,22 @@
 .nc-funnel-wrap:hover .nc-tooltip { display:block; }
 .nc-funnel-wrap .nc-tooltip { position:absolute; left:50%; bottom:100%; top:auto; transform:translateX(-50%); margin-bottom:8px; z-index:100; }
 .nc-funnel-item { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; gap:8px; transition:filter .2s; }
-.nc-funnel-label { font-size:12px; font-weight:600; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.5); text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.nc-funnel-value { font-size:11px; color:rgba(255,255,255,.85); text-shadow:0 1px 3px rgba(0,0,0,.5); }
+.nc-funnel-label { font-size:12px; font-weight:600; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.5); text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; }
+.nc-funnel-value { font-size:11px; color:rgba(255,255,255,.85); text-shadow:0 1px 3px rgba(0,0,0,.5); text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; }
 .nc-light .nc-funnel-label { color:#1c1c1e; text-shadow:none; }
 .nc-light .nc-funnel-value { color:rgba(0,0,0,.7); text-shadow:none; }
 .has-highlight .nc-canvas:hover .nc-funnel-wrap { opacity:.3; transition:opacity .25s; }
 .has-highlight .nc-canvas:hover .nc-funnel-wrap:hover { opacity:1; }
 
-/* Funnel — flipped (mirror the whole flow axis so the base is widest; keep text upright) */
+/* Funnel — flipped (mirror the whole flow axis so the base is widest; keep text upright).
+   The item label/value are flex-centered (static position), so they only need the counter-mirror
+   to read upright — no translate. The tooltip is absolutely positioned at left:50%, so it keeps
+   its translateX(-50%) centering on top of the counter-mirror. */
 .is-funnel-flipped:not(.is-funnel-horizontal) .nc-plot { transform:scaleY(-1); }
-.is-funnel-flipped:not(.is-funnel-horizontal) .nc-funnel-item > *,
+.is-funnel-flipped:not(.is-funnel-horizontal) .nc-funnel-item > * { transform:scaleY(-1); }
 .is-funnel-flipped:not(.is-funnel-horizontal) .nc-funnel-wrap > .nc-tooltip { transform:translateX(-50%) scaleY(-1); }
 .is-funnel-horizontal.is-funnel-flipped .nc-plot { transform:scaleX(-1); }
-.is-funnel-horizontal.is-funnel-flipped .nc-funnel-item > *,
+.is-funnel-horizontal.is-funnel-flipped .nc-funnel-item > * { transform:scaleX(-1); }
 .is-funnel-horizontal.is-funnel-flipped .nc-funnel-wrap > .nc-tooltip { transform:translateX(-50%) scaleX(-1); }
 
 /* Funnel — horizontal (left-to-right flow) */
