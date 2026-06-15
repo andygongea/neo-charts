@@ -276,6 +276,9 @@ neoCharts('.chart', {
 
 ### Pie / Donut
 
+![Pie Chart](demo/screenshots/pie-chart.png)
+![Donut Chart](demo/screenshots/donut-chart.png)
+
 Circular chart divided into slices proportional to values. Uses conic-gradient for rendering. Supports hover highlighting and tooltips.
 
 A **donut** is just a pie with a hole — set `pie.innerRadius` (a percentage, `0` = full pie). There is no separate `donut` type; for convenience `type: 'donut'` is accepted as an alias for `type: 'pie'` and defaults `innerRadius` to `60`.
@@ -316,6 +319,8 @@ neoCharts('.chart', {
 
 ### Bullet
 
+![Bullet Chart](demo/screenshots/bullet-chart.png)
+
 Horizontal bar chart with qualitative ranges and a target marker. Designed for comparing a measured value against a target. Set `bullet.targets` for comparative markers and `bullet.ranges` for background bands (absolute values).
 
 ```js
@@ -339,6 +344,9 @@ neoCharts('.chart', {
 ```
 
 ### Funnel
+
+![Funnel Chart](demo/screenshots/funnel-chart.png)
+![Trapezoid Chart](demo/screenshots/trapezoid-chart.png)
 
 Chart of decreasing-width trapezoids. Each level tapers into the next, representing conversion or drop-off stages. By default the flow runs top → bottom (widest stage on top).
 
