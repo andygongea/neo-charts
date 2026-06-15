@@ -7,7 +7,7 @@ Lightweight HTML/CSS chart library with zero dependencies. No SVG, no Canvas —
 - **Zero dependencies** — no jQuery, no D3, no build step required
 - **Pure CSS rendering** — all chart elements are styled DOM nodes, no SVG or Canvas
 - **Responsive** — charts resize with their container via ResizeObserver
-- **Pixel-perfect** — integer pixel sizing with remainder distribution for crisp rendering
+- **Pixel-perfect** — every item gets the same integer pixel size for crisp, even shapes (column, bar, funnel); any leftover pixels trail as space at the end
 - **Animated** — entry animations and smooth hover transitions
 - **Interactive** — tooltips on hover, highlight mode with bidirectional label sync (bar/waterfall)
 - **Configurable** — gap between items, gauge thickness, default color palette, light/dark themes
@@ -342,7 +342,7 @@ neoCharts('.chart', {
 
 Chart of decreasing-width trapezoids. Each level tapers into the next, representing conversion or drop-off stages. By default the flow runs top → bottom (widest stage on top).
 
-Two layout options control orientation:
+Three options control the funnel's orientation and shape:
 
 - **`funnel.direction`** — `'vertical'` (default) or `'horizontal'` (left → right flow).
 - **`funnel.flip`** — `false` (default) or `true` to mirror the flow axis. Flipping a vertical funnel produces a **pyramid** (narrow top, wide base); flipping a horizontal funnel reverses it to right → left.
