@@ -58,6 +58,10 @@
             targets: [],
             ranges: []
         },
+        funnel: {
+            direction: 'vertical',
+            flip: false
+        },
         highlight: false,
         animate: true,
         legend: true,
@@ -125,6 +129,21 @@
         return _colorRe.test(c) ? c : '#888';
     }
 
+    // Brand default used internally when a series omits color (matches default palette[0])
+    var DEFAULT_COLOR = '#3b82f6';
+
+    // Whitelist a CSS length/keyword for safe inline-style injection (width/height)
+    var _lengthRe = /^(auto|0|[-+]?[0-9]*\.?[0-9]+(px|em|rem|%|vw|vh|vmin|vmax|ch|ex|pt|pc|cm|mm|in)?|calc\([^"<>;{}]+\))$/;
+    function sanitizeLength(v, fallback) {
+        v = String(v).trim();
+        return _lengthRe.test(v) ? v : fallback;
+    }
+
+    // Whitelist text-align values
+    function sanitizeAlign(a) {
+        return (a === 'left' || a === 'center' || a === 'right') ? a : 'right';
+    }
+
     function abbreviate(value) {
         var abs = Math.abs(value);
         if (abs >= 1e9) return (value / 1e9).toFixed(1).replace(/\.0$/, '') + 'B';
@@ -140,9 +159,7 @@
     ];
 
     function getColor(colorArray, i) {
-        if (colorArray.length === 0) return 'background-color:' + defaultPalette[i % defaultPalette.length] + ';';
-        var c = colorArray.length === 1 ? colorArray[0] : (colorArray[i] || colorArray[colorArray.length - 1]);
-        return 'background-color:' + sanitizeColor(c) + ';';
+        return 'background-color:' + getColorValue(colorArray, i) + ';';
     }
 
     function getColorValue(colorArray, i) {
@@ -160,10 +177,18 @@
         var config = deepMerge(defaults, options || {});
         config.data.series = normalizeSeries(config.data.series);
 
+        // Backward compat: 'donut' is just 'pie' with a default inner radius.
+        if (config.type === 'donut') {
+            config.type = 'pie';
+            if (!options || !options.pie || options.pie.innerRadius == null) {
+                config.pie.innerRadius = 60;
+            }
+        }
+
         var series = config.data.series;
         var render = config.data.render;
         var type = config.type;
-        var validTypes = ['column', 'bar', 'line', 'area', 'progress', 'waterfall', 'gauge', 'heatmap', 'treemap', 'pie', 'donut', 'bullet', 'funnel'];
+        var validTypes = ['column', 'bar', 'line', 'area', 'progress', 'waterfall', 'gauge', 'heatmap', 'treemap', 'pie', 'bullet', 'funnel'];
 
         // Warn on common misconfigurations
         if (validTypes.indexOf(type) === -1) {
@@ -174,6 +199,19 @@
                 console.warn('neo-charts: series[' + idx + '] has ' + serie.values.length + ' values but ' + serie.labels.length + ' labels. They should match.');
             }
         });
+
+        // pie/funnel/treemap are proportional and assume non-negative values
+        var nonNegativeTypes = ['pie', 'funnel', 'treemap'];
+        if (nonNegativeTypes.indexOf(type) !== -1) {
+            series.forEach(function (serie, idx) {
+                for (var ni = 0; ni < serie.values.length; ni++) {
+                    if (serie.values[ni] < 0) {
+                        console.warn('neo-charts: "' + type + '" charts treat negative values as 0 (series[' + idx + '][' + ni + '] = ' + serie.values[ni] + ').');
+                        break;
+                    }
+                }
+            });
+        }
 
         var maxValue = 0;
         var minValue = 0;
@@ -380,17 +418,21 @@
                 + '</span>';
         }
 
-        function renderThreshold() {
+        function renderThreshold(isHorizontalBar) {
             var html = '';
             render.threshold.forEach(function (threshold) {
                 var val;
                 if (typeof threshold === 'string') {
-                    val = parseFloat(threshold);
+                    val = parseFloat(threshold); // already a percentage
                 } else {
-                    val = maxValue > 0 ? toFixed3(threshold * 100 / maxValue) : 0;
+                    val = maxValue > 0 ? parseFloat(toFixed3(threshold * 100 / maxValue)) : 0;
                 }
                 if (isNaN(val)) return;
-                html += '<div class="nc-threshold" style="height:' + val + '%"></div>';
+                if (isHorizontalBar) {
+                    html += '<div class="nc-threshold is-vertical" style="left:' + val + '%"></div>';
+                } else {
+                    html += '<div class="nc-threshold is-horizontal" style="height:' + val + '%"></div>';
+                }
             });
             return html;
         }
@@ -441,22 +483,25 @@
 
             for (var i = 0; i < len; i++) {
                 var items = '';
-                var tooltip = '<div class="nc-tooltip">';
-                tooltip += '<div class="nc-tooltip-header">' + escapeHtml(series[0].labels[i]) + '</div>';
+
+                // Build the combined tooltip body once per category (header + a row per series)
+                var tipBody = '<div class="nc-tooltip-header">' + escapeHtml(series[0].labels[i]) + '</div>';
+                for (var s = 0; s < series.length; s++) {
+                    tipBody += tooltipRow(getColorValue(series[s].color, i), escapeHtml(series[s].title), formatValue(series[s], i));
+                }
 
                 for (var s = 0; s < series.length; s++) {
                     var serie = series[s];
                     var h = serie.values[i] * 100 / maxStacked;
 
-                    tooltip += tooltipRow(getColorValue(serie.color, i), escapeHtml(serie.title), formatValue(serie, i));
-
+                    // Each segment carries the combined tooltip so it anchors to the hovered section
                     items += '<div class="nc-item"' + dataAttr(s, i) + ' style="height:' + toFixed3(h) + '%;' + getColor(serie.color, i) + '">';
                     items += renderItemContent(s, i, { hideLabel: true, hideValue: true });
+                    items += '<div class="nc-tooltip">' + tipBody + '<div class="nc-tooltip-arrow"></div></div>';
                     items += '</div>';
                 }
 
-                tooltip += '<div class="nc-tooltip-arrow"></div></div>';
-                html += '<div class="nc-stack"' + dataAttr(0, i) + '>' + tooltip + items + '</div>';
+                html += '<div class="nc-stack"' + dataAttr(0, i) + '>' + items + '</div>';
             }
             return html;
         }
@@ -484,7 +529,7 @@
                             style += 'margin-left:' + toFixed3((-minValue - Math.abs(val)) / range * 100) + '%;';
                         }
                     }
-                    html += '<div class="nc-item"' + dataAttr(idx, i) + ' style="' + style + '">';
+                    html += '<div class="nc-item" data-nc-width="' + w + '"' + dataAttr(idx, i) + ' style="' + style + '">';
                     html += renderItemContent(idx, i, { hideLabel: true });
                     html += renderTooltip(idx, i);
                     html += '</div>';
@@ -575,7 +620,7 @@
                 var len = serie.values.length;
                 if (len < 2) return;
 
-                var color = sanitizeColor(serie.color.length > 0 ? serie.color[0] : '#00aeef');
+                var color = getColorValue(serie.color, idx);
                 var smoothVals = isSmooth ? interpolatePoints(serie.values, SMOOTH_STEPS) : serie.values;
                 var smoothLen = smoothVals.length;
 
@@ -610,6 +655,17 @@
 
         function interpolateColor(rgb, t) {
             return 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',' + (0.08 + t * 0.82).toFixed(2) + ')';
+        }
+
+        // Pick a readable text color (light vs dark) for a solid background.
+        // Returns '' for non-hex colors so the CSS default applies.
+        function readableTextColor(bg) {
+            if (typeof bg !== 'string' || bg.charAt(0) !== '#') return '';
+            var rgb = parseHexColor(bg);
+            if (isNaN(rgb.r) || isNaN(rgb.g) || isNaN(rgb.b)) return '';
+            // Relative luminance (sRGB perceptual approximation)
+            var lum = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+            return lum > 0.6 ? 'is-text-dark' : 'is-text-light';
         }
 
         function renderHeatmap() {
@@ -679,7 +735,7 @@
             series.forEach(function (serie, sIdx) {
                 for (var i = 0; i < serie.values.length; i++) {
                     items.push({
-                        value: serie.values[i],
+                        value: Math.max(0, serie.values[i]),
                         label: serie.labels[i],
                         color: getColorValue(serie.color, i),
                         serieIdx: sIdx,
@@ -771,7 +827,8 @@
                 var serie = series[item.serieIdx];
                 var val = formatValue(serie, item.itemIdx);
 
-                html += '<div class="nc-treemap-cell"' + dataAttr(item.serieIdx, item.itemIdx) + ' style="'
+                var tmTextCls = readableTextColor(item.color);
+                html += '<div class="nc-treemap-cell' + (tmTextCls ? ' ' + tmTextCls : '') + '"' + dataAttr(item.serieIdx, item.itemIdx) + ' style="'
                     + 'left:' + toFixed3(r.x) + '%;top:' + toFixed3(r.y) + '%;'
                     + 'width:' + toFixed3(r.w) + '%;height:' + toFixed3(r.h) + '%;'
                     + 'background-color:' + item.color + ';'
@@ -793,21 +850,25 @@
             var value = serie.outputValues.length > 0 ? serie.outputValues[0] : current;
             var range = max - min;
             var pct = range > 0 ? ((current - min) / range) : 0;
-            var color = serie.color.length > 0 ? serie.color[0] : '#00aeef';
+            var color = sanitizeColor(serie.color.length > 0 ? serie.color[0] : DEFAULT_COLOR);
             var trackColor = 'var(--nc-border)';
             var startDeg = 180 + GAUGE_GAP_DEG;
             var arcDeg = 360 - GAUGE_GAP_DEG * 2;
             var displayStr = String(value);
-            var numMatch = displayStr.match(/^([^0-9]*?)([\d.]+)(.*)$/);
+            // Capture: prefix (non-numeric, sign goes with the number), number (with optional sign/commas), suffix
+            var numMatch = displayStr.match(/^([^0-9+-]*)([+-]?[\d,]*\.?\d+)(.*)$/);
+            var valuePrefix = numMatch ? numMatch[1] : '';
+            var numStr = numMatch ? numMatch[2].replace(/,/g, '') : '';
             var valueSuffix = numMatch ? numMatch[3] : '';
+            var decimals = numStr.indexOf('.') !== -1 ? numStr.split('.')[1].length : 0;
 
-            return '<div class="nc-ring" style="background:conic-gradient(from ' + startDeg + 'deg, ' + trackColor + ' 0deg, ' + trackColor + ' ' + arcDeg + 'deg, transparent ' + arcDeg + 'deg);--gauge-color:' + color + '"'
+            return '<div class="nc-ring"' + dataAttr(0, 0) + ' style="background:conic-gradient(from ' + startDeg + 'deg, ' + trackColor + ' 0deg, ' + trackColor + ' ' + arcDeg + 'deg, transparent ' + arcDeg + 'deg);--gauge-color:' + color + '"'
                 + ' data-start="' + startDeg + '" data-arc="' + arcDeg + '" data-pct="' + pct + '"'
                 + ' data-color="' + color + '" data-track="' + trackColor + '"'
-                + ' data-value-num="' + (numMatch ? parseFloat(numMatch[2]) : current) + '"'
-                + ' data-value-prefix="' + escapeHtml(numMatch ? numMatch[1] : '') + '"'
+                + ' data-value-num="' + (numStr !== '' ? parseFloat(numStr) : current) + '"'
+                + ' data-value-prefix="' + escapeHtml(valuePrefix) + '"'
                 + ' data-value-suffix="' + escapeHtml(valueSuffix) + '"'
-                + ' data-value-decimals="' + (numMatch && numMatch[2].indexOf('.') !== -1 ? numMatch[2].split('.')[1].length : 0) + '">'
+                + ' data-value-decimals="' + decimals + '">'
                 + '</div>'
                 + '<div class="nc-ring-content">'
                 + '<span class="nc-label">' + escapeHtml(serie.title) + '</span>'
@@ -826,8 +887,7 @@
             }
             if (!total) return renderEmpty();
 
-            var isDonut = type === 'donut';
-            var innerR = isDonut ? (config.pie.innerRadius || 60) : config.pie.innerRadius;
+            var innerR = config.pie.innerRadius;
 
             // Build conic-gradient stops
             var stops = [];
@@ -912,7 +972,7 @@
                 // Qualitative ranges (largest to smallest for correct z-stacking)
                 for (var r = ranges.length - 1; r >= 0; r--) {
                     var rangeW = maxValue > 0 ? toFixed3(ranges[r] / maxValue * 100) : 0;
-                    var bandOpacity = toFixed3(0.06 + (r / Math.max(1, ranges.length - 1)) * 0.14);
+                    var bandOpacity = toFixed3(0.04 + (r / Math.max(1, ranges.length - 1)) * 0.08);
                     html += '<div class="nc-bullet-range" style="width:' + rangeW + '%;opacity:' + bandOpacity + '"></div>';
                 }
 
@@ -932,6 +992,21 @@
             return html;
         }
 
+        // Build a trapezoid clip-path for one funnel band.
+        // startOff/endOff are the symmetric inset (%) on the leading/trailing edges.
+        function funnelClip(startOff, endOff, isHorizontal) {
+            var s = toFixed3(startOff);
+            var sEnd = toFixed3(100 - startOff);
+            var e = toFixed3(endOff);
+            var eEnd = toFixed3(100 - endOff);
+            if (isHorizontal) {
+                // Flow left -> right: leading edge on the left (x=0), trailing on the right (x=100)
+                return 'polygon(0% ' + s + '%,0% ' + sEnd + '%,100% ' + eEnd + '%,100% ' + e + '%)';
+            }
+            // Flow top -> bottom: leading edge on top (y=0), trailing on bottom (y=100)
+            return 'polygon(' + s + '% 0%,' + sEnd + '% 0%,' + eEnd + '% 100%,' + e + '% 100%)';
+        }
+
         function renderFunnel() {
             var html = '';
             if (!series.length) return html;
@@ -941,25 +1016,32 @@
             for (var i = 0; i < serie.values.length; i++) {
                 if (serie.values[i] > funnelMax) funnelMax = serie.values[i];
             }
-            if (!funnelMax) return renderEmpty();
+            if (funnelMax <= 0) return renderEmpty();
 
-            for (var i = 0; i < serie.values.length; i++) {
-                var val = serie.values[i];
-                var w = toFixed3(val / funnelMax * 100);
-                var nextVal = i < serie.values.length - 1 ? serie.values[i + 1] : val;
-                var nextW = toFixed3(nextVal / funnelMax * 100);
+            var isHorizontal = config.funnel.direction === 'horizontal';
+            var len = serie.values.length;
 
-                var offset = toFixed3((100 - parseFloat(w)) / 2);
-                var nextOffset = toFixed3((100 - parseFloat(nextW)) / 2);
+            // Each band is a trapezoid: leading edge = this value's width, trailing edge =
+            // next value's width. Neighbouring edges share a width, so the funnel is continuous.
+            // The `flip` option mirrors the whole plot (wide base / reverse flow) via CSS, which
+            // keeps edges aligned — see the .is-funnel-flipped rules.
+            for (var i = 0; i < len; i++) {
+                var val = Math.max(0, serie.values[i]);
+                var nextVal = i < len - 1 ? Math.max(0, serie.values[i + 1]) : val;
+                var w = val / funnelMax * 100;
+                var nextW = nextVal / funnelMax * 100;
 
-                var clipPath = 'polygon(' + offset + '% 0%,' + (100 - parseFloat(offset)) + '% 0%,'
-                    + (100 - parseFloat(nextOffset)) + '% 100%,' + nextOffset + '% 100%)';
+                var startOff = (100 - w) / 2;
+                var endOff = (100 - nextW) / 2;
+
+                var clipPath = funnelClip(startOff, endOff, isHorizontal);
 
                 var color = getColorValue(serie.color, i);
                 var displayVal = formatValue(serie, i);
 
+                var fnTextCls = readableTextColor(color);
                 html += '<div class="nc-funnel-wrap"' + dataAttr(0, i) + '>';
-                html += '<div class="nc-funnel-item"'
+                html += '<div class="nc-funnel-item' + (fnTextCls ? ' ' + fnTextCls : '') + '"'
                     + ' style="background-color:' + color + ';clip-path:' + clipPath + ';' + delay(i) + '">';
                 html += '<span class="nc-funnel-label">' + escapeHtml(serie.labels[i]) + '</span>';
                 html += '<span class="nc-funnel-value">' + displayVal + '</span>';
@@ -996,8 +1078,8 @@
         function renderLegend() {
             if (!config.legend || type === 'gauge' || type === 'treemap' || type === 'heatmap' || type === 'funnel' || type === 'bullet') return '';
 
-            // Pie/donut: always show item-level legend
-            if (type === 'pie' || type === 'donut') {
+            // Pie: always show item-level legend
+            if (type === 'pie') {
                 if (!series.length) return '';
                 var pieSerie = series[0];
                 var pieHtml = '<div class="nc-legend">';
@@ -1024,11 +1106,14 @@
             if (series.length < 2) return '';
 
             var html = '<div class="nc-legend">';
-            series.forEach(function (serie) {
-                html += legendItem(serie.color.length > 0 ? serie.color[0] : '#00aeef', serie.title);
+            series.forEach(function (serie, idx) {
+                html += legendItem(getColorValue(serie.color, idx), serie.title);
             });
             return html + '</div>';
         }
+
+        var gap = config.gap !== undefined ? config.gap : 2;
+        var groupGap = Math.max(1, Math.floor(gap / 2));
 
         // Build classes
         var classes = ['nc-chart'];
@@ -1040,11 +1125,15 @@
         if (config.highlight) classes.push('has-highlight');
         if (config.animate) classes.push('nc-animate');
         if (config.theme === 'light') classes.push('nc-light');
+        if (type === 'funnel' && config.funnel.direction === 'horizontal') classes.push('is-funnel-horizontal');
+        if (type === 'funnel' && config.funnel.flip) classes.push('is-funnel-flipped');
 
         var heightProp = type === 'gauge' ? 'height' : 'min-height';
-        var chartTemplate = '<div class="' + classes.join(' ') + '" style="width:' + config.layout.width + ';' + heightProp + ':' + config.layout.height + '">';
+        var safeWidth = sanitizeLength(config.layout.width, '100%');
+        var safeHeight = sanitizeLength(config.layout.height, '300px');
+        var chartTemplate = '<div class="' + classes.join(' ') + '" style="width:' + safeWidth + ';' + heightProp + ':' + safeHeight + '">';
         if (config.title.text) {
-            chartTemplate += '<div class="nc-title" style="text-align:' + config.title.align + '">' + escapeHtml(config.title.text);
+            chartTemplate += '<div class="nc-title" style="text-align:' + sanitizeAlign(config.title.align) + '">' + escapeHtml(config.title.text);
             if (config.title.subtitle) {
                 chartTemplate += '<div class="nc-subtitle">' + escapeHtml(config.title.subtitle) + '</div>';
             }
@@ -1054,7 +1143,7 @@
 
         var useGrid = (type === 'line' || type === 'area' || type === 'column' || type === 'bar' || type === 'waterfall' || type === 'bullet');
         var isHorizontalBar = type === 'bar' || type === 'waterfall' || type === 'bullet';
-        var skipGuidelines = type === 'gauge' || type === 'heatmap' || type === 'treemap' || type === 'progress' || type === 'pie' || type === 'donut' || type === 'funnel' || (type === 'bar' && render.stacked);
+        var skipGuidelines = type === 'gauge' || type === 'heatmap' || type === 'treemap' || type === 'progress' || type === 'pie' || type === 'funnel' || (type === 'bar' && render.stacked);
 
         // Bar/waterfall: render y-axis labels (category names) before the plot
         if (isHorizontalBar && series.length > 0 && series[0].labels.length > 0) {
@@ -1085,7 +1174,7 @@
         chartTemplate += '<div class="nc-canvas nc-plot"' + plotStyle + '>';
         if (!skipGuidelines) {
             if (render.threshold && render.threshold.length) {
-                chartTemplate += renderThreshold();
+                chartTemplate += renderThreshold(isHorizontalBar);
             }
             if (useGrid) {
                 chartTemplate += renderGuidelines(config.layout.lines.number, null);
@@ -1122,7 +1211,6 @@
                     chartTemplate += renderGauge();
                     break;
                 case 'pie':
-                case 'donut':
                     chartTemplate += renderPie();
                     break;
                 case 'bullet':
@@ -1273,9 +1361,10 @@
                     var yPct = toFixed3((1 - (range > 0 ? (vals[i] - minValue) / range : 0)) * 100);
                     poly.push(xPct + '% ' + yPct + '%');
                 }
-                // Close polygon at bottom-right and bottom-left (at y=0 baseline)
-                poly.push('100% 100%');
-                poly.push('0% 100%');
+                // Close polygon along the zero baseline (chart bottom when all values >= 0)
+                var baseYPct = toFixed3((1 - (range > 0 ? (0 - minValue) / range : 0)) * 100);
+                poly.push('100% ' + baseYPct + '%');
+                poly.push('0% ' + baseYPct + '%');
                 fill.style.clipPath = 'polygon(' + poly.join(',') + ')';
             });
         }
@@ -1301,8 +1390,6 @@
         }
 
         var resizeObserver = null;
-        var gap = config.gap !== undefined ? config.gap : 2;
-        var groupGap = Math.max(1, Math.floor(gap / 2));
 
         function toggleLegend(el) {
             var legend = el.querySelector('.nc-legend');
@@ -1446,7 +1533,9 @@
                     }
                 } else if (type !== 'waterfall') {
                     el.style.left = '0';
-                    el.style.width = '100%';
+                    // Preserve the value-proportional width from renderBar (don't stretch to full plot)
+                    var barPct = el.getAttribute('data-nc-width');
+                    el.style.width = (barPct != null ? barPct + '%' : '100%');
                 }
 
                 if (yLabels[i]) {
@@ -1459,6 +1548,29 @@
 
             if (yaxis) {
                 yaxis.style.gap = gap + 'px';
+            }
+        }
+
+        // Bar values sit just past the bar's right edge. When a bar is long enough that
+        // the value would overflow the plot, flip it to sit inside the bar instead.
+        // The bar's final width comes from its inline width:% (the grow animation transform
+        // would make a measured rect unreliable mid-animation), so derive it from that.
+        function positionBarValues(canvas) {
+            var plotW = canvas.clientWidth;
+            if (!plotW) return;
+            var values = canvas.querySelectorAll('.nc-item > .nc-main > .nc-value');
+            for (var i = 0; i < values.length; i++) {
+                var valEl = values[i];
+                var bar = valEl.closest('.nc-item');
+                if (!bar) continue;
+                bar.classList.remove('nc-value-inside'); // reset so resize re-evaluates cleanly
+                var pct = parseFloat(bar.getAttribute('data-nc-width')); // final width as % of plot
+                if (isNaN(pct)) continue;
+                var barRightPx = (pct / 100) * plotW;
+                var needed = valEl.scrollWidth + 8; // label width + padding
+                if (barRightPx + needed > plotW) {
+                    bar.classList.add('nc-value-inside');
+                }
             }
         }
 
@@ -1514,9 +1626,11 @@
         if (type === 'bar' || type === 'waterfall') {
             var barCanvas = element.querySelector('.nc-plot');
             sizeBars(barCanvas);
+            positionBarValues(barCanvas);
 
             observeResize(function () {
                 sizeBars(barCanvas);
+                positionBarValues(barCanvas);
                 toggleLegend(element);
             });
 
@@ -1676,8 +1790,8 @@
             }
         }
 
-        if (type === 'pie' || type === 'donut') {
-            var pieRing = element.querySelector('.nc-pie-ring');
+        var pieRing = (type === 'pie') ? element.querySelector('.nc-pie-ring') : null;
+        if (pieRing) {
             var pieHighlight = element.querySelector('.nc-pie-highlight');
             var pieTips = element.querySelectorAll('.nc-pie-tip-item');
             var pieTotal = parseFloat(pieRing.dataset.ncPieTotal);
@@ -1703,7 +1817,7 @@
                 var radius = rect.width / 2;
                 if (dist > radius) return -1;
 
-                var innerR = (type === 'donut') ? (config.pie.innerRadius || 60) : config.pie.innerRadius;
+                var innerR = config.pie.innerRadius;
                 if (innerR > 0 && dist < radius * innerR / 100) return -1;
 
                 // Angle from top, clockwise (matching conic-gradient from 0deg)
@@ -1729,7 +1843,8 @@
                 // Highlight overlay
                 if (idx >= 0 && pieHighlight) {
                     var s = sliceBounds[idx];
-                    pieHighlight.style.background = 'conic-gradient(from 0deg, transparent ' + toFixed3(s.start) + 'deg, rgba(255,255,255,0.15) ' + toFixed3(s.start) + 'deg ' + toFixed3(s.end) + 'deg, transparent ' + toFixed3(s.end) + 'deg)';
+                    var hlColor = 'var(--nc-highlight-overlay, rgba(255,255,255,0.15))';
+                    pieHighlight.style.background = 'conic-gradient(from 0deg, transparent ' + toFixed3(s.start) + 'deg, ' + hlColor + ' ' + toFixed3(s.start) + 'deg ' + toFixed3(s.end) + 'deg, transparent ' + toFixed3(s.end) + 'deg)';
                     pieHighlight.style.display = '';
                 } else if (pieHighlight) {
                     pieHighlight.style.display = 'none';

@@ -11,7 +11,7 @@ Lightweight HTML/CSS chart library with zero dependencies. No SVG, no Canvas —
 - **Animated** — entry animations and smooth hover transitions
 - **Interactive** — tooltips on hover, highlight mode with bidirectional label sync (bar/waterfall)
 - **Configurable** — gap between items, gauge thickness, default color palette, light/dark themes
-- **13 chart types** — column, bar, line, area, progress, waterfall, heatmap, treemap, gauge, pie, donut, bullet, funnel
+- **12 chart types** — column, bar, line, area, progress, waterfall, heatmap, treemap, gauge, pie (with donut variant), bullet, funnel
 - **Multi-series** — grouped and stacked modes for column and bar charts
 
 ## Installation
@@ -274,11 +274,14 @@ neoCharts('.chart', {
 });
 ```
 
-### Pie
+### Pie / Donut
 
 Circular chart divided into slices proportional to values. Uses conic-gradient for rendering. Supports hover highlighting and tooltips.
 
+A **donut** is just a pie with a hole — set `pie.innerRadius` (a percentage, `0` = full pie). There is no separate `donut` type; for convenience `type: 'donut'` is accepted as an alias for `type: 'pie'` and defaults `innerRadius` to `60`.
+
 ```js
+// Pie
 neoCharts('.chart', {
     type: 'pie',
     layout: { width: '100%', height: '280px' },
@@ -291,15 +294,10 @@ neoCharts('.chart', {
         }]
     }
 });
-```
 
-### Donut
-
-Same as pie with a configurable inner cutout. Set `pie.innerRadius` to control hole size (default 60% for donut type).
-
-```js
+// Donut — same chart, with a hole
 neoCharts('.chart', {
-    type: 'donut',
+    type: 'pie',
     pie: { innerRadius: 70 },
     layout: { width: '100%', height: '280px' },
     data: {
@@ -340,11 +338,17 @@ neoCharts('.chart', {
 
 ### Funnel
 
-Vertical chart with decreasing-width trapezoids. Each level tapers into the next, representing conversion or drop-off stages.
+Chart of decreasing-width trapezoids. Each level tapers into the next, representing conversion or drop-off stages. By default the flow runs top → bottom (widest stage on top).
+
+Two layout options control orientation:
+
+- **`funnel.direction`** — `'vertical'` (default) or `'horizontal'` (left → right flow).
+- **`funnel.flip`** — `false` (default) or `true` to mirror the flow axis. Flipping a vertical funnel produces a **pyramid** (narrow top, wide base); flipping a horizontal funnel reverses it to right → left.
 
 ```js
 neoCharts('.chart', {
     type: 'funnel',
+    funnel: { direction: 'vertical', flip: false },
     layout: { width: '100%', height: '280px' },
     data: {
         series: [{
@@ -356,26 +360,31 @@ neoCharts('.chart', {
         }]
     }
 });
+
+// Pyramid (wide base):  funnel: { flip: true }
+// Horizontal funnel:     funnel: { direction: 'horizontal' }
 ```
 
 ## Options Reference
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `type` | string | `'column'` | Chart type: `column`, `bar`, `progress`, `waterfall`, `line`, `area`, `heatmap`, `treemap`, `gauge`, `pie`, `donut`, `bullet`, `funnel` |
+| `type` | string | `'column'` | Chart type: `column`, `bar`, `progress`, `waterfall`, `line`, `area`, `heatmap`, `treemap`, `gauge`, `pie`, `bullet`, `funnel`. (`donut` is accepted as an alias for `pie` with `innerRadius: 60`.) |
 | `cssClass` | string | `''` | Additional CSS class on the chart container |
 | `highlight` | boolean | `false` | Dim sibling items on hover (bidirectional for bar/waterfall labels) |
 | `animate` | boolean | `true` | Animate items on initial render |
-| `legend` | boolean | `true` | Show legend when multiple series exist |
+| `legend` | boolean | `true` | Show legend when applicable. Auto-hidden if it would occupy more than a third of the chart height. |
 | `smooth` | boolean | `false` | Use smooth curves for line/area charts |
 | `fit` | boolean | `false` | Fit chart to container |
 | `gap` | number | `2` | Gap in pixels between chart items (bar, column, treemap) |
 | `theme` | string | `'dark'` | Color theme: `'dark'` or `'light'` |
 | `gauge.thickness` | number | `14` | Gauge ring thickness in pixels |
 | `gauge.valueFontSize` | number | `48` | Gauge value font size in pixels |
-| `pie.innerRadius` | number | `0` | Inner radius as percentage (0 = full pie, 60+ = donut). Auto-set to 60 for `type: 'donut'` |
+| `pie.innerRadius` | number | `0` | Inner radius as percentage (0 = full pie, 60+ = donut). Defaults to 60 when `type: 'donut'` is used |
 | `bullet.targets` | array | `[]` | Target marker values per item (absolute values) |
 | `bullet.ranges` | array | `[]` | Qualitative range boundaries (absolute values). Auto-generated if empty |
+| `funnel.direction` | string | `'vertical'` | Funnel flow direction: `'vertical'` or `'horizontal'` |
+| `funnel.flip` | boolean | `false` | Mirror the funnel's flow axis. Vertical + flip = pyramid (wide base); horizontal + flip = right → left |
 | `title.text` | string | `'Neo Charts'` | Chart title text |
 | `title.subtitle` | string | `''` | Subtitle text below the title |
 | `title.align` | string | `'right'` | Title alignment: `left`, `center`, `right` |
@@ -385,10 +394,10 @@ neoCharts('.chart', {
 | `layout.lines.align` | string | `'right'` | Guideline label position: `left`, `right` |
 | `data.render.empty` | string | `'No data available.'` | Message shown when series has no data |
 | `data.render.stacked` | boolean | `false` | Stack multiple series (column/bar) |
-| `data.render.threshold` | array | `[]` | Threshold lines |
+| `data.render.threshold` | array | `[]` | Threshold marker lines. Each entry is a data value (positioned against the auto axis) or a string percentage like `'75%'`. Drawn horizontally on column/line/area, vertically on bar/waterfall. |
 | `data.series` | array | `[]` | Array of series objects |
-| `onClick` | function | `null` | Callback when a chart item is clicked |
-| `onHover` | function | `null` | Callback when a chart item is hovered |
+| `onClick` | function | `null` | Callback when a chart item is clicked. Receives `(eventData, domEvent)` where `eventData` has `seriesIndex`, `index`, `value`, `label`, `seriesTitle`, `element`. Fires for all chart types including gauge (index 0 = current value). |
+| `onHover` | function | `null` | Callback when a chart item is hovered. Same signature as `onClick`. |
 
 ### Series Object
 
@@ -398,7 +407,7 @@ neoCharts('.chart', {
 | `values` | number[] | Data values |
 | `labels` | string[] | Label for each value |
 | `outputValues` | string[] | Custom display values (e.g. `['1.2K', '3.4M']`). Falls back to raw values if empty. |
-| `color` | string[] | One color for the whole series, or one per item. When omitted, a built-in 10-color palette is used automatically. |
+| `color` | string[] | One color for the whole series, or one per item. When omitted, a built-in 10-color palette is used automatically (cycled by item, or by series index for line/area). |
 | `prefix` | string | Prepended to displayed values (e.g. `'$'`) |
 | `suffix` | string | Appended to displayed values (e.g. `'%'`) |
 | `decimals` | number | Decimal places in tooltips (default: `3`) |
@@ -418,6 +427,11 @@ When no `color` array is provided, items cycle through this 10-color palette:
 | `chart.update(newOptions)` | Merge new options and re-render the chart. Returns a new API object. |
 | `chart.destroy()` | Remove the chart and clean up event listeners. |
 | `chart.element` | The DOM element containing the chart. |
+
+## Notes
+
+- **Non-negative chart types** — `pie`, `funnel`, and `treemap` are proportional and treat negative values as `0` (a console warning is emitted). Use `column`/`bar`/`line`/`area` for data that crosses zero.
+- **Global alias** — `simpleChart` is exposed as a backward-compatible alias for `neoCharts` when loaded via a plain `<script>` tag.
 
 ## Demo
 

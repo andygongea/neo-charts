@@ -4,20 +4,21 @@
 
 .p-neo-charts.is-transparent { box-shadow:none; }
 .is-transparent > .nc-chart { background-color:transparent; }
-.nc-chart { --nc-bg:#1a1a2e; --nc-text:rgba(255,255,255,.85); --nc-text-muted:rgba(255,255,255,.7); --nc-text-dim:rgba(255,255,255,.6); --nc-text-faint:rgba(255,255,255,.5); --nc-border:rgba(255,255,255,.08); --nc-border-strong:rgba(255,255,255,.15); --nc-tooltip-bg:rgba(15,15,30,.95); --nc-tooltip-text:rgba(255,255,255,.9); background-color:transparent; overflow:visible; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding:20px 24px; display:flex; flex-direction:column; gap:16px; }
+.nc-chart { --nc-bg:#1a1a2e; --nc-text:rgba(255,255,255,.85); --nc-text-muted:rgba(255,255,255,.7); --nc-text-dim:rgba(255,255,255,.6); --nc-text-faint:rgba(255,255,255,.5); --nc-border:rgba(255,255,255,.08); --nc-border-strong:rgba(255,255,255,.15); --nc-tooltip-bg:rgba(15,15,30,.95); --nc-tooltip-text:rgba(255,255,255,.9); --nc-highlight-overlay:rgba(255,255,255,.15); --nc-bullet-band:rgba(255,255,255,.5); background-color:transparent; overflow:visible; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding:20px 24px; display:flex; flex-direction:column; gap:16px; }
 .nc-chart, .nc-chart * { box-sizing:border-box }
 .nc-chart .nc-title { width:100%; padding:0; flex-shrink:0; text-align:right; font-weight:600; font-size:16px; color:var(--nc-text) }
 .nc-chart .nc-subtitle { font-size:12px; font-weight:400; color:var(--nc-text-muted); margin-top:2px; }
 
 /* Light theme */
-.nc-chart.nc-light { --nc-bg:#ffffff; --nc-text:rgba(0,0,0,.85); --nc-text-muted:rgba(0,0,0,.65); --nc-text-dim:rgba(0,0,0,.58); --nc-text-faint:rgba(0,0,0,.55); --nc-border:rgba(0,0,0,.08); --nc-border-strong:rgba(0,0,0,.15); --nc-tooltip-bg:rgba(255,255,255,.95); --nc-tooltip-text:rgba(0,0,0,.85); }
+.nc-chart.nc-light { --nc-bg:#ffffff; --nc-text:rgba(0,0,0,.85); --nc-text-muted:rgba(0,0,0,.65); --nc-text-dim:rgba(0,0,0,.58); --nc-text-faint:rgba(0,0,0,.55); --nc-border:rgba(0,0,0,.08); --nc-border-strong:rgba(0,0,0,.15); --nc-tooltip-bg:rgba(255,255,255,.95); --nc-tooltip-text:rgba(0,0,0,.85); --nc-highlight-overlay:rgba(0,0,0,.12); --nc-bullet-band:rgba(0,0,0,.45); }
 
 .nc-chart-body { flex:1; min-height:0; display:flex; flex-direction:column; }
 .nc-empty { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:400; color:var(--nc-text-faint); margin:0; }
 
-.nc-item { background-color:#00aeef; cursor:pointer; }
+.nc-item { background-color:#3b82f6; cursor:pointer; }
 .nc-item:hover { z-index:1000; }
 .nc-item:hover .nc-tooltip { display:block; }
+.nc-stack:hover { z-index:1000; }
 .nc-item .nc-main .nc-label { font-size:12px; color:var(--nc-text-muted); text-align:center }
 .nc-item .nc-main .nc-value { font-size:12px; font-weight:600; color:var(--nc-text); }
 
@@ -35,7 +36,9 @@
 .has-highlight .nc-canvas:hover .nc-stack { opacity:.3; transition:opacity .25s; }
 .has-highlight .nc-canvas:hover .nc-stack:hover { opacity:1; }
 
-.nc-threshold { position:absolute; left:0; right:0; bottom:0; border-top:1px dotted #f55; background-image:linear-gradient(rgba(255, 85, 85, .1), transparent) }
+.nc-threshold { position:absolute; z-index:1; pointer-events:none; }
+.nc-threshold.is-horizontal { left:0; right:0; bottom:0; border-top:1px dotted #f55; background-image:linear-gradient(rgba(255, 85, 85, .1), transparent) }
+.nc-threshold.is-vertical { top:0; bottom:0; left:0; border-right:1px dotted #f55; background-image:linear-gradient(to left, rgba(255, 85, 85, .1), transparent) }
 
 .nc-guidelines { position:absolute; top:0; right:0; bottom:0; left:0; overflow:visible; z-index:1; pointer-events:none; }
 .nc-guidelines .nc-guideline { position:absolute; z-index:0; border:0 solid var(--nc-border); }
@@ -61,6 +64,8 @@
 .nc-column .nc-item { text-align:center; border-radius:1px; transition:all .3s; position:relative; }
 .nc-column .nc-main .nc-value { position:absolute; top:-18px; left:0; width:100%; }
 .nc-column .nc-tooltip { bottom:calc(100% + 18px); }
+/* Stacked segments have no value label, so anchor the tooltip directly above the section */
+.nc-column.is-stacked .nc-tooltip { bottom:100%; }
 .nc-baseline { position:absolute; left:0; right:0; border-top:1px solid var(--nc-border-strong); z-index:1; pointer-events:none; }
 
 /* Bar / Waterfall / Bullet — shared horizontal layout */
@@ -78,6 +83,9 @@
 .nc-bar .nc-stack { display:flex; flex:1; }
 .nc-bar .nc-item { border-radius:15px; position:relative; min-height:0; }
 .nc-bar .nc-main .nc-value { position:absolute; left:100%; top:50%; transform:translateY(-50%); padding-left:6px; white-space:nowrap; font-size:12px; }
+/* When the bar is long enough that an outside value would overflow, place it inside the bar */
+.nc-bar .nc-item.nc-value-inside .nc-main .nc-value { left:auto; right:0; padding-left:0; padding-right:8px; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.4); }
+.nc-light .nc-bar .nc-item.nc-value-inside .nc-main .nc-value { color:#fff; }
 .nc-bar.is-stacked .nc-stack { position:relative; }
 .nc-bar.is-stacked .nc-item { border-radius:0; flex:none; }
 .nc-bar.is-stacked .nc-stack .nc-item:first-child { border-radius:15px 0 0 15px; }
@@ -147,6 +155,11 @@
 .nc-light .nc-treemap-value { color:rgba(0,0,0,.7); text-shadow:none; }
 .has-highlight .nc-canvas:hover .nc-treemap-cell { opacity:.3; transition:opacity .25s, filter .2s; }
 .has-highlight .nc-canvas:hover .nc-treemap-cell:hover { opacity:1; }
+/* Luminance-aware text on solid cells (overrides theme defaults) */
+.nc-chart .nc-treemap-cell.is-text-dark .nc-treemap-label, .nc-chart .nc-funnel-item.is-text-dark .nc-funnel-label { color:#1c1c1e; text-shadow:none; }
+.nc-chart .nc-treemap-cell.is-text-dark .nc-treemap-value, .nc-chart .nc-funnel-item.is-text-dark .nc-funnel-value { color:rgba(0,0,0,.7); text-shadow:none; }
+.nc-chart .nc-treemap-cell.is-text-light .nc-treemap-label, .nc-chart .nc-funnel-item.is-text-light .nc-funnel-label { color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.5); }
+.nc-chart .nc-treemap-cell.is-text-light .nc-treemap-value, .nc-chart .nc-funnel-item.is-text-light .nc-funnel-value { color:rgba(255,255,255,.85); text-shadow:0 1px 3px rgba(0,0,0,.5); }
 
 /* Footer (x-axis + legend) — always rendered for consistent height across sibling charts */
 .nc-footer { grid-column:1 / -1; min-height:24px; display:flex; flex-direction:column; gap:8px; }
@@ -158,8 +171,8 @@
 .nc-legend-label { font-size:12px; color:var(--nc-text-muted); }
 
 /* Pie & Donut */
-.nc-pie .nc-chart-body, .nc-donut .nc-chart-body { justify-content:center; }
-.nc-pie .nc-plot, .nc-donut .nc-plot { position:relative; flex:1; min-height:0; display:flex; align-items:center; justify-content:center; }
+.nc-pie .nc-chart-body { justify-content:center; }
+.nc-pie .nc-plot { position:relative; flex:1; min-height:0; display:flex; align-items:center; justify-content:center; }
 .nc-pie-ring { position:relative; border-radius:50%; aspect-ratio:1; height:100%; max-width:100%; cursor:pointer; }
 .nc-pie-highlight { position:absolute; border-radius:50%; aspect-ratio:1; height:100%; max-width:100%; pointer-events:none; display:none; top:50%; left:50%; transform:translate(-50%,-50%); }
 .nc-pie-tip-item { position:absolute; z-index:100; pointer-events:none; }
@@ -184,7 +197,7 @@
 /* Bullet-specific */
 .nc-bullet-row { position:relative; overflow:visible; }
 .nc-bullet-row:hover .nc-tooltip { display:block; }
-.nc-bullet-range { position:absolute; top:0; left:0; height:100%; background-color:var(--nc-text); border-radius:2px; }
+.nc-bullet-range { position:absolute; top:0; left:0; height:100%; background-color:var(--nc-bullet-band); border-radius:2px; }
 .nc-bullet-bar { position:absolute; height:40%; top:30%; border-radius:2px; z-index:2; }
 .nc-bullet-target { position:absolute; top:10%; height:80%; width:3px; background-color:var(--nc-text); z-index:3; transform:translateX(-50%); border-radius:1px; }
 .nc-bullet-row .nc-tooltip { z-index:100; }
@@ -204,6 +217,21 @@
 .has-highlight .nc-canvas:hover .nc-funnel-wrap { opacity:.3; transition:opacity .25s; }
 .has-highlight .nc-canvas:hover .nc-funnel-wrap:hover { opacity:1; }
 
+/* Funnel — flipped (mirror the whole flow axis so the base is widest; keep text upright) */
+.is-funnel-flipped:not(.is-funnel-horizontal) .nc-plot { transform:scaleY(-1); }
+.is-funnel-flipped:not(.is-funnel-horizontal) .nc-funnel-item > *,
+.is-funnel-flipped:not(.is-funnel-horizontal) .nc-funnel-wrap > .nc-tooltip { transform:translateX(-50%) scaleY(-1); }
+.is-funnel-horizontal.is-funnel-flipped .nc-plot { transform:scaleX(-1); }
+.is-funnel-horizontal.is-funnel-flipped .nc-funnel-item > *,
+.is-funnel-horizontal.is-funnel-flipped .nc-funnel-wrap > .nc-tooltip { transform:translateX(-50%) scaleX(-1); }
+
+/* Funnel — horizontal (left-to-right flow) */
+.nc-funnel.is-funnel-horizontal .nc-plot { flex-direction:row; }
+.is-funnel-horizontal .nc-funnel-item { flex-direction:column; gap:2px; padding:0 4px; }
+.is-funnel-horizontal .nc-funnel-wrap .nc-tooltip { left:50%; bottom:auto; top:100%; transform:translateX(-50%); margin-bottom:0; margin-top:8px; }
+/* Flip the tooltip arrow to point up when it sits below the band */
+.is-funnel-horizontal .nc-funnel-wrap .nc-tooltip .nc-tooltip-arrow { bottom:auto; top:-4px; border-right:none; border-bottom:none; border-left:1px solid var(--nc-border-strong); border-top:1px solid var(--nc-border-strong); }
+
 /* Animation */
 @keyframes nc-grow-up { from { transform:scaleY(0); } to { transform:scaleY(1); } }
 @keyframes nc-grow-right { from { transform:scaleX(0); } to { transform:scaleX(1); } }
@@ -219,7 +247,7 @@
 .nc-animate.nc-area .nc-area-fill { animation:nc-fade-in .6s ease-out both; }
 .nc-animate.nc-heatmap .nc-heatmap-cell { animation:nc-fade-in .4s ease-out both; }
 .nc-animate.nc-treemap .nc-treemap-cell { animation:nc-fade-in .4s ease-out both; }
-.nc-animate.nc-pie .nc-pie-ring, .nc-animate.nc-donut .nc-pie-ring { animation:nc-fade-in .6s ease-out both; }
+.nc-animate.nc-pie .nc-pie-ring { animation:nc-fade-in .6s ease-out both; }
 .nc-animate.nc-bullet .nc-bullet-bar { animation:nc-grow-right .6s ease-out both; transform-origin:left; }
 .nc-animate.nc-funnel .nc-funnel-wrap { animation:nc-fade-in .4s ease-out both; }
 

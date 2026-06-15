@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Neo Charts — Type Gallery (chart / empty / config)</title>
+    <link rel="stylesheet" href="../neo-charts.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            --bg: #111113;
+            --text: #a0a0a6;
+            --heading: #e4e4e7;
+            --muted: rgba(255,255,255,.4);
+            --card-bg: rgba(25,25,27,.95);
+            --card-border: rgba(255,255,255,.07);
+            --chart-surface: #1a1a2e;
+            --accent: #22d3ee;
+            --code-bg: rgba(0,0,0,.35);
+            --code-text: #d4d4d8;
+            --code-border: rgba(255,255,255,.08);
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            transition: background-color .3s, color .3s;
+        }
+        body.light {
+            --bg: #ededee;
+            --text: #505055;
+            --heading: #1c1c1e;
+            --muted: rgba(0,0,0,.4);
+            --card-bg: #f9f9fa;
+            --card-border: rgba(0,0,0,.08);
+            --chart-surface: #ffffff;
+            --accent: #0891b2;
+            --code-bg: rgba(0,0,0,.04);
+            --code-text: #27272a;
+            --code-border: rgba(0,0,0,.1);
+        }
+
+        .wrap { max-width: 1480px; margin: 0 auto; padding: 48px 40px 80px; }
+
+        header { display: flex; align-items: flex-end; justify-content: space-between; padding-bottom: 28px; margin-bottom: 36px; border-bottom: 1px solid var(--card-border); }
+        header h1 { font-size: 22px; font-weight: 700; color: var(--heading); letter-spacing: -0.3px; }
+        header p { font-size: 13px; color: var(--muted); margin-top: 8px; }
+
+        .theme-toggle { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 0.5px; transition: border-color .2s, color .2s; }
+        .theme-toggle:hover { border-color: var(--accent); color: var(--heading); }
+
+        /* Column header strip */
+        .col-head { display: grid; grid-template-columns: 1.1fr 1.1fr 1fr; gap: 20px; padding: 0 4px 12px; position: sticky; top: 0; background: var(--bg); z-index: 5; }
+        .col-head span { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); }
+
+        /* Each type row */
+        .row { margin-bottom: 28px; }
+        .row-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); margin-bottom: 12px; padding-left: 4px; }
+        .row-grid { display: grid; grid-template-columns: 1.1fr 1.1fr 1fr; gap: 20px; align-items: stretch; }
+
+        .cell { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; display: flex; flex-direction: column; min-height: 320px; }
+        /* Config cell clips its scrolling editor; chart cell must let tooltips / bar values escape */
+        .cell.config { overflow: hidden; }
+        .cell:not(.config) { overflow: visible; }
+        .cell-label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); padding: 14px 18px 0; }
+        .cell .chart-host { flex: 1; min-height: 0; display: flex; }
+        .cell .chart-host > .nc-chart { flex: 1; }
+
+        /* Config cell */
+        .cell.config { background: var(--code-bg); }
+        .config-editor { flex: 1; width: 100%; border: none; resize: none; background: transparent; color: var(--code-text); font-family: 'SF Mono', ui-monospace, 'Cascadia Code', Menlo, Consolas, monospace; font-size: 11.5px; line-height: 1.55; padding: 10px 18px 18px; tab-size: 2; outline: none; white-space: pre; overflow: auto; }
+        .config-editor.invalid { box-shadow: inset 0 0 0 2px rgba(248,113,113,.6); }
+        .config-status { font-size: 10px; padding: 6px 18px 12px; min-height: 24px; color: var(--muted); }
+        .config-status.ok { color: #34d399; }
+        .config-status.err { color: #f87171; }
+
+        /* Settings cell */
+        .settings { display: flex; flex-direction: column; gap: 2px; padding: 6px 18px 16px; overflow: auto; }
+        .setting { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--card-border); }
+        .setting:last-child { border-bottom: none; }
+        .setting-label { font-size: 12px; color: var(--text); white-space: nowrap; }
+        .setting-label code { font-size: 10.5px; color: var(--muted); font-family: 'SF Mono', ui-monospace, Menlo, monospace; display: block; margin-top: 1px; }
+        .setting-control { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+        /* Toggle switch */
+        .sw { position: relative; width: 38px; height: 22px; flex-shrink: 0; }
+        .sw input { opacity: 0; width: 0; height: 0; }
+        .sw .track { position: absolute; inset: 0; background: var(--card-border); border-radius: 22px; transition: background .2s; cursor: pointer; }
+        .sw .track::before { content: ''; position: absolute; left: 3px; top: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+        .sw input:checked + .track { background: var(--accent); }
+        .sw input:checked + .track::before { transform: translateX(16px); }
+
+        /* Select */
+        .setting select { background: var(--card-bg); color: var(--text); border: 1px solid var(--card-border); border-radius: 6px; padding: 5px 8px; font-size: 12px; cursor: pointer; outline: none; }
+        .setting select:focus { border-color: var(--accent); }
+
+        /* Range */
+        .setting input[type=range] { width: 90px; accent-color: var(--accent); cursor: pointer; }
+        .setting .range-val { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 28px; text-align: right; }
+
+        .settings-empty { font-size: 12px; color: var(--muted); padding: 16px 0; font-style: italic; }
+
+        footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--card-border); font-size: 12px; color: var(--muted); text-align: center; }
+        footer a { color: var(--accent); text-decoration: none; }
+
+        @media (max-width: 980px) {
+            .col-head, .row-grid { grid-template-columns: 1fr; }
+            .col-head { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <header>
+            <div>
+                <h1>Neo Charts — Type Gallery</h1>
+                <p>Every chart type, three ways: rendered · its available options/modes · live-editable config. Toggle a setting or edit the JSON to re-render.</p>
+            </div>
+            <button class="theme-toggle" onclick="toggleTheme()">Toggle theme</button>
+        </header>
+
+        <div class="col-head">
+            <span>Chart</span>
+            <span>Options &amp; modes</span>
+            <span>Config (editable)</span>
+        </div>
+
+        <div id="rows"></div>
+
+        <footer>
+            <p>Built with <a href="https://github.com/andygongea/neo-charts">Neo Charts</a> — zero-dependency HTML/CSS charting</p>
+        </footer>
+    </div>
+
+    <script src="../neo-charts.js"></script>
+    <script>
+        var currentTheme = 'dark';
+
+        // ── One config per chart type. `theme` is injected at render time. ──
+        var TYPES = [
+            {
+                key: 'column', name: 'Column',
+                config: {
+                    title: { text: 'Weekly Detections', align: 'center' },
+                    type: 'column', highlight: true,
+                    layout: { width: '100%', height: '260px' },
+                    data: { series: [{ title: 'Detections', values: [120, 450, 320, 780, 560], labels: ['Mon','Tue','Wed','Thu','Fri'], color: ['#3b82f6'], decimals: 0 }] }
+                }
+            },
+            {
+                key: 'bar', name: 'Bar',
+                config: {
+                    title: { text: 'Top Vectors', align: 'center' },
+                    type: 'bar', highlight: true,
+                    layout: { width: '100%', height: '260px' },
+                    data: { series: [{ title: 'CVEs', values: [3020, 1410, 965, 780, 640], labels: ['XSS','SQLi','RCE','Path Traversal','CSRF'], color: ['#ef4444','#f97316','#f59e0b','#10b981','#6366f1'], decimals: 0 }] }
+                }
+            },
+            {
+                key: 'line', name: 'Line',
+                config: {
+                    title: { text: 'Monthly Revenue', align: 'center' },
+                    type: 'line', highlight: true,
+                    layout: { width: '100%', height: '260px' },
+                    data: { series: [{ title: 'Revenue', values: [120, 450, 320, 780, 560, 920], labels: ['Jan','Feb','Mar','Apr','May','Jun'], color: ['#22d3ee'], prefix: '$', suffix: 'K', decimals: 0 }] }
+                }
+            },
+            {
+                key: 'area', name: 'Area',
+                config: {
+                    title: { text: 'Active Users', align: 'center' },
+                    type: 'area', highlight: true,
+                    layout: { width: '100%', height: '260px' },
+                    data: { series: [{ title: 'Users', values: [100, 300, 250, 600, 450, 800], labels: ['Jan','Feb','Mar','Apr','May','Jun'], color: ['#a78bfa'], decimals: 0 }] }
+                }
+            },
+            {
+                key: 'progress', name: 'Progress',
+                config: {
+                    title: { text: 'Budget Allocation', align: 'center' },
+                    type: 'progress', fit: true,
+                    layout: { width: '100%', height: '260px' },
+                    data: { series: [{ title: 'Budget', values: [45, 30, 15, 10], labels: ['Engineering','Marketing','Sales','Other'], color: ['#3b82f6','#10b981','#f59e0b','#8b5cf6'], suffix: '%', decimals: 0 }] }
+                }
+            },
+            {
+                key: 'waterfall', name: 'Waterfall',
+                config: {
+                    title: { text: 'Feature Impact', align: 'center' },
+                    type: 'waterfall', highlight: true,
+                    layout: { width: '100%' },
+                    data: { series: [{ title: 'Impact', values: [500, 300, 200, 150, 100], labels: ['Base','Feature A','Feature B','Feature C','Feature D'], color: ['#22d3ee','#34d399','#facc15','#a78bfa','#fb7185'], decimals: 0 }] }
+                }
+            },
+            {
+                key: 'heatmap', name: 'Heatmap',
+                config: {
+                    title: { text: 'Traffic by Hour', align: 'center' },
+                    type: 'heatmap', highlight: true,
+                    layout: { width: '100%', height: '260px' },
+                    data: { series: [
+                        { title: 'Mon', values: [2, 5, 12, 18, 8, 3], labels: ['6a','8a','10a','12p','2p','4p'], color: ['#22d3ee'] },
+                        { title: 'Tue', values: [1, 3, 8, 22, 11, 6], labels: ['6a','8a','10a','12p','2p','4p'], color: ['#22d3ee'] },
+                        { title: 'Wed', values: [3, 7, 14, 25, 13, 8], labels: ['6a','8a','10a','12p','2p','4p'], color: ['#22d3ee'] }
+                    ] }
+                }
+            },
+            {
+                key: 'treemap', name: 'Treemap',
+                config: {
+                    title: { text: 'Disk Usage', align: 'center' },
+                    type: 'treemap', highlight: true,
+                    layout: { width: '100%', height: '260px' },
+                    data: { series: [{ title: 'Disk', values: [450, 320, 280, 180, 150], labels: ['Photos','Videos','Docs','Music','Apps'], outputValues: ['450 GB','320 GB','280 GB','180 GB','150 GB'], color: ['#3b82f6','#10b981','#f59e0b','#8b5cf6','#fb7185'] }] }
+                }
+            },
+            {
+                key: 'gauge', name: 'Gauge',
+                config: {
+                    title: { text: 'Performance', align: 'center' },
+                    type: 'gauge', gauge: { thickness: 14, valueFontSize: 44 },
+                    layout: { width: '100%', height: '260px' },
+                    data: { series: [{ title: 'Score', values: [86, 0, 100], labels: ['Current','Min','Max'], outputValues: ['86%'], color: ['#22d3ee'], suffix: '%' }] }
+                }
+            },
+            {
+                key: 'pie', name: 'Pie / Donut',
+                config: {
+                    title: { text: 'Market Share', align: 'center' },
+                    type: 'pie', pie: { innerRadius: 0 },
+                    layout: { width: '100%', height: '260px' },
+                    data: { series: [{ title: 'Share', values: [40, 30, 20, 10], labels: ['Chrome','Safari','Firefox','Other'], color: ['#3b82f6','#10b981','#f59e0b','#8b5cf6'], suffix: '%' }] }
+                }
+            },
+            {
+                key: 'bullet', name: 'Bullet',
+                config: {
+                    title: { text: 'KPIs vs Target', align: 'left' },
+                    type: 'bullet', bullet: { targets: [90, 85, 95], ranges: [60, 80, 100] },
+                    layout: { width: '100%', height: '260px' },
+                    data: { series: [{ title: 'KPIs', values: [82, 71, 93], labels: ['Revenue','Profit','Satisfaction'], color: ['#3b82f6','#f59e0b','#10b981'], suffix: '%' }] }
+                }
+            },
+            {
+                key: 'funnel', name: 'Funnel',
+                config: {
+                    title: { text: 'Sales Pipeline', align: 'center' },
+                    type: 'funnel', funnel: { direction: 'vertical', flip: false },
+                    layout: { width: '100%', height: '260px' },
+                    data: { series: [{ title: 'Pipeline', values: [1200, 800, 400, 120], labels: ['Visitors','Leads','Opportunities','Deals'], color: ['#6b7280','#3b82f6','#f59e0b','#10b981'], decimals: 0 }] }
+                }
+            }
+        ];
+
+        // Live state: per-row chart instances + the user-edited config object
+        var rows = [];
+
+        function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
+
+        function withTheme(cfg) {
+            var c = deepClone(cfg);
+            c.theme = currentTheme;
+            return c;
+        }
+
+        // ── Dot-path get/set so controls can read/write nested config values ──
+        function getPath(obj, path) {
+            var parts = path.split('.');
+            for (var i = 0; i < parts.length && obj != null; i++) obj = obj[parts[i]];
+            return obj;
+        }
+        function setPath(obj, path, value) {
+            var parts = path.split('.');
+            for (var i = 0; i < parts.length - 1; i++) {
+                if (obj[parts[i]] == null || typeof obj[parts[i]] !== 'object') obj[parts[i]] = {};
+                obj = obj[parts[i]];
+            }
+            obj[parts[parts.length - 1]] = value;
+        }
+
+        // ── Control factories ──
+        function toggle(label, path) { return { kind: 'toggle', label: label, path: path }; }
+        function select(label, path, options) { return { kind: 'select', label: label, path: path, options: options }; }
+        function range(label, path, min, max, step) { return { kind: 'range', label: label, path: path, min: min, max: max, step: step }; }
+
+        // Base options per type. The Legend toggle is appended dynamically — only when the
+        // current config would actually render a legend (see legendWouldShow) — so toggling
+        // it always has a visible effect.
+        var CONTROLS = {
+            column:    [toggle('Highlight', 'highlight'), toggle('Animate', 'animate'), toggle('Stacked', 'data.render.stacked')],
+            bar:       [toggle('Highlight', 'highlight'), toggle('Animate', 'animate'), toggle('Stacked', 'data.render.stacked')],
+            line:      [toggle('Highlight', 'highlight'), toggle('Animate', 'animate'), toggle('Smooth curve', 'smooth')],
+            area:      [toggle('Highlight', 'highlight'), toggle('Animate', 'animate'), toggle('Smooth curve', 'smooth')],
+            progress:  [toggle('Highlight', 'highlight'), toggle('Animate', 'animate'), toggle('Fit height', 'fit')],
+            waterfall: [toggle('Highlight', 'highlight'), toggle('Animate', 'animate')],
+            heatmap:   [toggle('Highlight', 'highlight'), toggle('Animate', 'animate')],
+            treemap:   [toggle('Highlight', 'highlight'), toggle('Animate', 'animate'),
+                        range('Gap', 'gap', 0, 12, 1)],
+            gauge:     [toggle('Animate', 'animate'),
+                        range('Ring thickness', 'gauge.thickness', 4, 40, 1),
+                        range('Value font size', 'gauge.valueFontSize', 16, 72, 1)],
+            // Donut is just a pie with inner radius > 0 — drag this slider up to get a donut.
+            pie:       [toggle('Animate', 'animate'),
+                        range('Inner radius (0 = pie, 60+ = donut)', 'pie.innerRadius', 0, 90, 1)],
+            bullet:    [toggle('Animate', 'animate'), toggle('Highlight', 'highlight')],
+            funnel:    [toggle('Animate', 'animate'),
+                        select('Direction', 'funnel.direction', ['vertical', 'horizontal']),
+                        toggle('Flip (wide base / reverse)', 'funnel.flip')]
+        };
+
+        // Mirrors the library's renderLegend logic: would a legend actually appear?
+        function legendWouldShow(cfg) {
+            var type = cfg.type;
+            if (type === 'gauge' || type === 'treemap' || type === 'heatmap' || type === 'funnel' || type === 'bullet') return false;
+            var series = (cfg.data && cfg.data.series) || [];
+            if (type === 'pie') return series.length > 0;
+            var stacked = cfg.data && cfg.data.render && cfg.data.render.stacked;
+            if (series.length === 1 && !stacked) {
+                var s = series[0];
+                if (!s.color || s.color.length <= 1) return false;
+                if (type === 'bar' || type === 'column' || type === 'waterfall' || type === 'progress') return false;
+                return true; // single multi-color line/area
+            }
+            return series.length >= 2;
+        }
+
+        function controlsFor(cfg) {
+            var base = (CONTROLS[cfg.type] || []).slice();
+            if (legendWouldShow(cfg)) base.push(toggle('Legend', 'legend'));
+            return base;
+        }
+
+        function buildRows() {
+            var host = document.getElementById('rows');
+            host.innerHTML = '';
+            rows = [];
+
+            TYPES.forEach(function (t, idx) {
+                var row = document.createElement('div');
+                row.className = 'row';
+
+                var title = document.createElement('div');
+                title.className = 'row-title';
+                title.textContent = t.name + '  —  type: \'' + t.key + '\'';
+                row.appendChild(title);
+
+                var grid = document.createElement('div');
+                grid.className = 'row-grid';
+
+                // Cell 1: rendered chart
+                var chartCell = document.createElement('div');
+                chartCell.className = 'cell';
+                chartCell.innerHTML = '<div class="cell-label">Rendered</div><div class="chart-host" id="chart-' + idx + '"></div>';
+
+                // Cell 2: options & modes
+                var settingsCell = document.createElement('div');
+                settingsCell.className = 'cell';
+                settingsCell.innerHTML = '<div class="cell-label">Options &amp; modes</div>'
+                    + '<div class="settings" id="settings-' + idx + '"></div>';
+
+                // Cell 3: editable config
+                var configCell = document.createElement('div');
+                configCell.className = 'cell config';
+                configCell.innerHTML = '<div class="cell-label">Config (edit to re-render)</div>'
+                    + '<textarea class="config-editor" spellcheck="false" id="cfg-' + idx + '"></textarea>'
+                    + '<div class="config-status" id="status-' + idx + '"></div>';
+
+                grid.appendChild(chartCell);
+                grid.appendChild(settingsCell);
+                grid.appendChild(configCell);
+                row.appendChild(grid);
+                host.appendChild(row);
+
+                var editor = configCell.querySelector('.config-editor');
+                editor.value = JSON.stringify(t.config, null, 2);
+
+                var r = { type: t, idx: idx, editor: editor, chart: null, settingsEl: settingsCell.querySelector('.settings') };
+                rows.push(r);
+
+                buildSettings(r);
+                editor.addEventListener('input', function () { onEdit(idx); });
+            });
+
+            renderAll();
+        }
+
+        // Build the controls for one row from its type's option list
+        function buildSettings(r) {
+            var controls = controlsFor(r.type.config);
+            r.settingsEl.innerHTML = '';
+            if (!controls.length) {
+                r.settingsEl.innerHTML = '<div class="settings-empty">No configurable modes for this type.</div>';
+                return;
+            }
+            controls.forEach(function (ctrl) {
+                var row = document.createElement('div');
+                row.className = 'setting';
+
+                var label = document.createElement('div');
+                label.className = 'setting-label';
+                label.innerHTML = ctrl.label + '<code>' + ctrl.path + '</code>';
+
+                var control = document.createElement('div');
+                control.className = 'setting-control';
+                control.appendChild(buildControl(r, ctrl));
+
+                row.appendChild(label);
+                row.appendChild(control);
+                r.settingsEl.appendChild(row);
+            });
+        }
+
+        function buildControl(r, ctrl) {
+            var current = getPath(r.type.config, ctrl.path);
+
+            if (ctrl.kind === 'toggle') {
+                var wrap = document.createElement('label');
+                wrap.className = 'sw';
+                var input = document.createElement('input');
+                input.type = 'checkbox';
+                // Mirror library defaults so unset options show their real state
+                var defaultTrue = (ctrl.path === 'animate' || ctrl.path === 'legend');
+                input.checked = current === undefined ? defaultTrue : !!current;
+                var track = document.createElement('span');
+                track.className = 'track';
+                input.addEventListener('change', function () {
+                    applyControl(r, ctrl.path, input.checked);
+                });
+                wrap.appendChild(input);
+                wrap.appendChild(track);
+                return wrap;
+            }
+
+            if (ctrl.kind === 'select') {
+                var sel = document.createElement('select');
+                ctrl.options.forEach(function (opt) {
+                    var o = document.createElement('option');
+                    o.value = opt; o.textContent = opt;
+                    if (String(current) === opt) o.selected = true;
+                    sel.appendChild(o);
+                });
+                sel.addEventListener('change', function () {
+                    applyControl(r, ctrl.path, sel.value);
+                });
+                return sel;
+            }
+
+            // range
+            var frag = document.createDocumentFragment();
+            var input2 = document.createElement('input');
+            input2.type = 'range';
+            input2.min = ctrl.min; input2.max = ctrl.max; input2.step = ctrl.step;
+            var val = current;
+            if (val === undefined) val = defaultForRange(ctrl.path);
+            input2.value = val;
+            var out = document.createElement('span');
+            out.className = 'range-val';
+            out.textContent = val;
+            input2.addEventListener('input', function () {
+                out.textContent = input2.value;
+                applyControl(r, ctrl.path, parseFloat(input2.value));
+            });
+            frag.appendChild(input2);
+            frag.appendChild(out);
+            return frag;
+        }
+
+        // Library defaults for range controls that may be unset in the demo config
+        function defaultForRange(path) {
+            var defaults = { 'gap': 2, 'gauge.thickness': 14, 'gauge.valueFontSize': 48, 'pie.innerRadius': 0 };
+            return defaults[path] != null ? defaults[path] : 0;
+        }
+
+        // A second series to stack/group, derived from the primary series' shape.
+        function makeSecondSeries(primary) {
+            var vals = (primary.values || []).map(function (v, i) {
+                return Math.round(v * (0.35 + 0.25 * Math.sin(i)) + 20); // smaller, varied companion
+            });
+            return {
+                title: (primary.title || 'Series') + ' (B)',
+                values: vals,
+                labels: (primary.labels || []).slice(),
+                color: ['#f59e0b'],
+                prefix: primary.prefix || '',
+                suffix: primary.suffix || '',
+                decimals: primary.decimals != null ? primary.decimals : 3
+            };
+        }
+
+        // Stacking only makes sense with 2+ series, so add/remove a companion series
+        // when the Stacked toggle flips. This also makes the Legend toggle meaningful.
+        function syncStackedSeries(cfg, stacked) {
+            var series = cfg.data && cfg.data.series;
+            if (!series || !series.length) return;
+            if (stacked && series.length < 2) {
+                series.push(makeSecondSeries(series[0]));
+            } else if (!stacked && series.length > 1) {
+                cfg.data.series = [series[0]]; // collapse back to the primary series
+            }
+        }
+
+        // A control changed: update the config, re-render, and sync the JSON editor
+        function applyControl(r, path, value) {
+            setPath(r.type.config, path, value);
+            if (path === 'data.render.stacked') {
+                syncStackedSeries(r.type.config, value);
+                buildSettings(r); // legend control becomes meaningful once multi-series
+            }
+            renderRow(r);
+            r.editor.value = JSON.stringify(r.type.config, null, 2);
+            r.editor.classList.remove('invalid');
+            var status = document.getElementById('status-' + r.idx);
+            status.className = 'config-status ok';
+            status.textContent = '✓ Updated ' + path;
+        }
+
+        function onEdit(idx) {
+            var r = rows[idx];
+            var status = document.getElementById('status-' + idx);
+            var parsed;
+            try {
+                parsed = JSON.parse(r.editor.value);
+            } catch (e) {
+                r.editor.classList.add('invalid');
+                status.className = 'config-status err';
+                status.textContent = '✕ ' + e.message;
+                return;
+            }
+            r.editor.classList.remove('invalid');
+            status.className = 'config-status ok';
+            status.textContent = '✓ Valid — re-rendered';
+            r.type.config = parsed; // persist edits across theme toggles
+            renderRow(r);
+            buildSettings(r); // reflect edited values (and any type change) in the controls
+        }
+
+        function renderRow(r) {
+            if (r.chart) { r.chart.destroy(); r.chart = null; }
+            r.chart = neoCharts('#chart-' + r.idx, withTheme(r.type.config));
+        }
+
+        function renderAll() {
+            rows.forEach(renderRow);
+        }
+
+        function toggleTheme() {
+            currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.body.classList.toggle('light', currentTheme === 'light');
+            renderAll();
+        }
+
+        buildRows();
+    </script>
+</body>
+</html>
