@@ -287,19 +287,23 @@
         // current config would actually render a legend (see legendWouldShow) — so toggling
         // it always has a visible effect.
         var CONTROLS = {
-            column:    [toggle('Highlight', 'highlight'), toggle('Animate', 'animate'), toggle('Stacked', 'data.render.stacked')],
-            bar:       [toggle('Highlight', 'highlight'), toggle('Animate', 'animate'), toggle('Stacked', 'data.render.stacked')],
+            column:    [toggle('Highlight', 'highlight'), toggle('Animate', 'animate'), toggle('Stacked', 'data.render.stacked'),
+                        range('Gap', 'gap', 0, 12, 1)],
+            bar:       [toggle('Highlight', 'highlight'), toggle('Animate', 'animate'), toggle('Stacked', 'data.render.stacked'),
+                        range('Gap', 'gap', 0, 12, 1)],
             line:      [toggle('Highlight', 'highlight'), toggle('Animate', 'animate'), toggle('Smooth curve', 'smooth')],
             area:      [toggle('Highlight', 'highlight'), toggle('Animate', 'animate'), toggle('Smooth curve', 'smooth')],
             progress:  [toggle('Highlight', 'highlight'), toggle('Animate', 'animate'), toggle('Fit height', 'fit')],
             waterfall: [toggle('Highlight', 'highlight'), toggle('Animate', 'animate')],
-            heatmap:   [toggle('Highlight', 'highlight'), toggle('Animate', 'animate')],
+            heatmap:   [toggle('Highlight', 'highlight'), toggle('Animate', 'animate'),
+                        range('Gap', 'gap', 0, 12, 1)],
             treemap:   [toggle('Highlight', 'highlight'), toggle('Animate', 'animate'),
                         range('Gap', 'gap', 0, 12, 1)],
             gauge:     [toggle('Animate', 'animate'),
                         range('Ring thickness', 'gauge.thickness', 4, 40, 1),
                         range('Value font size', 'gauge.valueFontSize', 16, 72, 1)],
             // Donut is just a pie with inner radius > 0 — drag this slider up to get a donut.
+            // The Gap control is appended dynamically (donut mode only) — see controlsFor.
             pie:       [toggle('Animate', 'animate'),
                         range('Inner radius (0 = pie, 60+ = donut)', 'pie.innerRadius', 0, 90, 1)],
             bullet:    [toggle('Animate', 'animate'), toggle('Highlight', 'highlight')],
@@ -326,6 +330,11 @@
 
         function controlsFor(cfg) {
             var base = (CONTROLS[cfg.type] || []).slice();
+            // Pie slice gaps only apply in donut mode, so only offer the Gap control when
+            // innerRadius > 0 (matches the library, which ignores gap on a full pie).
+            if (cfg.type === 'pie' && cfg.pie && cfg.pie.innerRadius > 0) {
+                base.push(range('Gap', 'gap', 0, 12, 1));
+            }
             if (legendWouldShow(cfg)) base.push(toggle('Legend', 'legend'));
             return base;
         }
@@ -501,10 +510,16 @@
 
         // A control changed: update the config, re-render, and sync the JSON editor
         function applyControl(r, path, value) {
+            var hadGap = controlsFor(r.type.config).some(function (c) { return c.path === 'gap'; });
             setPath(r.type.config, path, value);
             if (path === 'data.render.stacked') {
                 syncStackedSeries(r.type.config, value);
                 buildSettings(r); // legend control becomes meaningful once multi-series
+            } else if (path === 'pie.innerRadius') {
+                // The Gap control appears only in donut mode (innerRadius > 0). Rebuild the panel
+                // only when crossing that boundary so we don't tear down the slider mid-drag.
+                var hasGap = controlsFor(r.type.config).some(function (c) { return c.path === 'gap'; });
+                if (hadGap !== hasGap) buildSettings(r);
             }
             renderRow(r);
             r.editor.value = JSON.stringify(r.type.config, null, 2);

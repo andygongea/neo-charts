@@ -210,7 +210,7 @@ neoCharts('.chart', {
 
 ![Heatmap Chart](demo/screenshots/heatmap-chart.png)
 
-Grid-based chart where cell color intensity represents the value. Each series becomes a row, and labels become columns.
+Grid-based chart where cell color intensity represents the value. Each series becomes a row, and labels become columns. Set `gap` (pixels) to control the spacing between cells.
 
 ```js
 neoCharts('.chart', {
@@ -279,6 +279,8 @@ neoCharts('.chart', {
 Circular chart divided into slices proportional to values. Uses conic-gradient for rendering. Supports hover highlighting and tooltips.
 
 A **donut** is just a pie with a hole — set `pie.innerRadius` (a percentage, `0` = full pie). There is no separate `donut` type; for convenience `type: 'donut'` is accepted as an alias for `type: 'pie'` and defaults `innerRadius` to `60`.
+
+In **donut** mode (`innerRadius > 0`) set `gap` (pixels) to add spacing between slices; the gap shows the chart background through and scales with the rendered radius. Set `gap: 0` for edge-to-edge slices. The gap is ignored on a full pie (`innerRadius: 0`).
 
 ```js
 // Pie
@@ -376,7 +378,7 @@ neoCharts('.chart', {
 | `legend` | boolean | `true` | Show legend when applicable. Auto-hidden if it would occupy more than a third of the chart height. |
 | `smooth` | boolean | `false` | Use smooth curves for line/area charts |
 | `fit` | boolean | `false` | Fit chart to container |
-| `gap` | number | `2` | Gap in pixels between chart items (bar, column, treemap) |
+| `gap` | number | `2` | Gap in pixels between chart items. Applies to `column`, `bar`, `treemap`, `heatmap`, and `donut` (spacing between slices; donut only — ignored on a full pie). |
 | `theme` | string | `'dark'` | Color theme: `'dark'` or `'light'` |
 | `gauge.thickness` | number | `14` | Gauge ring thickness in pixels |
 | `gauge.valueFontSize` | number | `48` | Gauge value font size in pixels |

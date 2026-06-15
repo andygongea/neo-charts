@@ -690,15 +690,15 @@
             var cols = series[0].labels.length;
             var rows = series.length;
 
-            // Column labels
-            html += '<div class="nc-heatmap-col-labels" style="grid-template-columns:repeat(' + cols + ',1fr)">';
+            // Column labels (column gap matches the grid so labels stay aligned)
+            html += '<div class="nc-heatmap-col-labels" style="grid-template-columns:repeat(' + cols + ',1fr);column-gap:' + gap + 'px">';
             for (var c = 0; c < cols; c++) {
                 html += '<span class="nc-heatmap-col-label">' + escapeHtml(series[0].labels[c]) + '</span>';
             }
             html += '</div>';
 
             // Grid
-            html += '<div class="nc-heatmap-grid" style="grid-template-columns:repeat(' + cols + ',1fr);grid-template-rows:repeat(' + rows + ',1fr)">';
+            html += '<div class="nc-heatmap-grid" style="grid-template-columns:repeat(' + cols + ',1fr);grid-template-rows:repeat(' + rows + ',1fr);gap:' + gap + 'px">';
             for (var s = 0; s < rows; s++) {
                 var serie = series[s];
                 var highRgb = parseHexColor(getColorValue(serie.color, 0));
@@ -716,8 +716,8 @@
             }
             html += '</div>';
 
-            // Row labels
-            html += '<div class="nc-heatmap-row-labels" style="grid-template-rows:repeat(' + rows + ',1fr)">';
+            // Row labels (row gap matches the grid so labels stay aligned)
+            html += '<div class="nc-heatmap-row-labels" style="grid-template-rows:repeat(' + rows + ',1fr);row-gap:' + gap + 'px">';
             for (var s = 0; s < rows; s++) {
                 html += '<span class="nc-heatmap-row-label">' + escapeHtml(series[s].title) + '</span>';
             }
@@ -876,6 +876,42 @@
                 + '</div>';
         }
 
+        // Inset a slice's [start,end] edges by halfGap on each side, clamped so it never inverts.
+        // A pie is a closed ring, so EVERY boundary is shared (including the 0deg/360deg seam) and
+        // every slice is inset on both sides — there is no first/last special case.
+        function insetSlice(start, end, halfGap) {
+            var s = start + halfGap;
+            var e = end - halfGap;
+            if (e < s) e = s = (start + end) / 2; // collapse to a point if the gap exceeds the slice
+            return { start: s, end: e };
+        }
+
+        // Build the conic-gradient color stops for a pie/donut, inserting a transparent wedge of
+        // `gapDeg` degrees between adjacent slices (split symmetrically across each shared edge).
+        // A single slice (or gapDeg <= 0) produces no gaps. Returns the comma-joined stop list.
+        function pieSliceStops(serie, total, gapDeg) {
+            var n = serie.values.length;
+            var halfGap = (n > 1 && gapDeg > 0) ? gapDeg / 2 : 0;
+            var stops = [];
+            var angle = 0;
+            for (var i = 0; i < n; i++) {
+                var sliceAngle = (Math.abs(serie.values[i]) / total) * 360;
+                var endAngle = angle + sliceAngle;
+                var color = getColorValue(serie.color, i);
+                if (halfGap > 0) {
+                    // Shrink the slice on both sides; the freed degrees show through as the gap.
+                    var inset = insetSlice(angle, endAngle, halfGap);
+                    stops.push('transparent ' + toFixed3(angle) + 'deg ' + toFixed3(inset.start) + 'deg');
+                    stops.push(color + ' ' + toFixed3(inset.start) + 'deg ' + toFixed3(inset.end) + 'deg');
+                    stops.push('transparent ' + toFixed3(inset.end) + 'deg ' + toFixed3(endAngle) + 'deg');
+                } else {
+                    stops.push(color + ' ' + toFixed3(angle) + 'deg ' + toFixed3(endAngle) + 'deg');
+                }
+                angle = endAngle;
+            }
+            return stops.join(',');
+        }
+
         function renderPie() {
             var html = '';
             if (!series.length) return html;
@@ -889,19 +925,12 @@
 
             var innerR = config.pie.innerRadius;
 
-            // Build conic-gradient stops
-            var stops = [];
-            var angle = 0;
-            for (var i = 0; i < serie.values.length; i++) {
-                var val = Math.abs(serie.values[i]);
-                var sliceAngle = (val / total) * 360;
-                var endAngle = angle + sliceAngle;
-                var color = getColorValue(serie.color, i);
-                stops.push(color + ' ' + toFixed3(angle) + 'deg ' + toFixed3(endAngle) + 'deg');
-                angle = endAngle;
-            }
+            // Build conic-gradient stops. The gap (px) is converted to degrees in JS once the
+            // ring's rendered radius is known (see the pie sizing block); the initial render uses
+            // a 0deg gap so there is no flash of mis-sized slices before sizing runs.
+            var stops = pieSliceStops(serie, total, 0);
 
-            var ringStyle = 'background:conic-gradient(from 0deg,' + stops.join(',') + ')';
+            var ringStyle = 'background:conic-gradient(from 0deg,' + stops + ')';
             if (innerR > 0) {
                 ringStyle += ';' + donutMask(innerR);
             }
@@ -1168,8 +1197,6 @@
         var plotStyle = '';
         if (type === 'gauge') {
             plotStyle = ' style="--gauge-thickness:' + config.gauge.thickness + 'px;--gauge-value-size:' + config.gauge.valueFontSize + 'px"';
-        } else if (type === 'funnel') {
-            plotStyle = ' style="gap:' + gap + 'px"';
         }
         chartTemplate += '<div class="nc-canvas nc-plot"' + plotStyle + '>';
         if (!skipGuidelines) {
@@ -1422,8 +1449,10 @@
 
             var totalGap = gap * (n - 1);
             var available = canvas.clientWidth - totalGap;
+            // Every column gets the same integer width for pixel-perfect, even shapes; any leftover
+            // (available % n) is left as trailing space at the end of the plot rather than spread
+            // across items (which would make some 1px wider than others).
             var baseWidth = Math.floor(available / n);
-            var remainder = available - baseWidth * n;
             var left = 0;
 
             // Get matching x-axis labels from footer
@@ -1431,7 +1460,7 @@
             var xLabels = xaxis ? xaxis.querySelectorAll('.nc-axis-label') : [];
 
             for (var i = 0; i < n; i++) {
-                var w = baseWidth + (i < remainder ? 1 : 0);
+                var w = baseWidth;
                 var el = children[i];
                 el.style.position = 'absolute';
                 if (!el.style.bottom) el.style.bottom = '0';
@@ -1445,11 +1474,11 @@
                     if (gn > 0 && el.classList.contains('nc-group')) {
                         var gTotalGap = groupGap * (gn - 1);
                         var gAvail = w - gTotalGap;
+                        // Uniform integer width per bar; leftover trails at the end of the group.
                         var gBase = Math.floor(gAvail / gn);
-                        var gRem = gAvail - gBase * gn;
                         var gLeft = 0;
                         for (var j = 0; j < gn; j++) {
-                            var gw = gBase + (j < gRem ? 1 : 0);
+                            var gw = gBase;
                             items[j].style.position = 'absolute';
                             if (!items[j].style.bottom) items[j].style.bottom = '0';
                             items[j].style.left = gLeft + 'px';
@@ -1485,8 +1514,10 @@
 
             var totalGap = gap * (n - 1);
             var available = canvas.clientHeight - totalGap;
+            // Every bar gets the same integer height for pixel-perfect, even shapes; any leftover
+            // (available % n) is left as trailing space at the end of the plot rather than spread
+            // across items (which would make some 1px taller than others).
             var baseHeight = Math.floor(available / n);
-            var remainder = available - baseHeight * n;
             var top = 0;
 
             var yaxis = element.querySelector('.nc-yaxis');
@@ -1498,7 +1529,7 @@
             }
 
             for (var i = 0; i < n; i++) {
-                var h = baseHeight + (i < remainder ? 1 : 0);
+                var h = baseHeight;
                 var el = children[i];
                 el.style.position = 'absolute';
                 el.style.top = top + 'px';
@@ -1518,11 +1549,11 @@
                         if (gn > 0) {
                             var gTotalGap = groupGap * (gn - 1);
                             var gAvail = h - gTotalGap;
+                            // Uniform integer height per bar; leftover trails at the end of the group.
                             var gBase = Math.floor(gAvail / gn);
-                            var gRem = gAvail - gBase * gn;
                             var gTop = 0;
                             for (var j = 0; j < gn; j++) {
-                                var gh = gBase + (j < gRem ? 1 : 0);
+                                var gh = gBase;
                                 items[j].style.position = 'absolute';
                                 items[j].style.left = '0';
                                 items[j].style.top = gTop + 'px';
@@ -1607,6 +1638,35 @@
                 cell.style.width = Math.max(0, x2 - x) + 'px';
                 cell.style.height = Math.max(0, y2 - y) + 'px';
             }
+        }
+
+        // Give each funnel band an equal integer extent along the flow axis (height when vertical,
+        // width when horizontal) so the trapezoids are pixel-perfect. The leftover (extent % n) is
+        // left as trailing space at the end of the plot, matching column/bar.
+        function sizeFunnel(plot) {
+            var wraps = plot.querySelectorAll('.nc-funnel-wrap');
+            var n = wraps.length;
+            if (!n) return;
+            var horizontal = config.funnel.direction === 'horizontal';
+            var extent = horizontal ? plot.clientWidth : plot.clientHeight;
+            var base = Math.floor(extent / n);
+            for (var i = 0; i < n; i++) {
+                var wrap = wraps[i];
+                wrap.style.flex = 'none';
+                if (horizontal) {
+                    wrap.style.width = base + 'px';
+                    wrap.style.height = '';
+                } else {
+                    wrap.style.height = base + 'px';
+                    wrap.style.width = '';
+                }
+            }
+        }
+
+        if (type === 'funnel') {
+            var funnelPlot = element.querySelector('.nc-plot');
+            sizeFunnel(funnelPlot);
+            observeResize(function () { sizeFunnel(funnelPlot); });
         }
 
         if (type === 'column') {
@@ -1796,7 +1856,8 @@
             var pieTips = element.querySelectorAll('.nc-pie-tip-item');
             var pieTotal = parseFloat(pieRing.dataset.ncPieTotal);
 
-            // Compute slice boundaries (degrees from 12 o'clock, clockwise)
+            // Compute slice boundaries (degrees from 12 o'clock, clockwise). These stay gapless so
+            // hover hit-testing covers the full ring with no dead zones in the visual gaps.
             var sliceBounds = [];
             var pieAngle = 0;
             var pieSerie = series[0];
@@ -1804,6 +1865,44 @@
                 var sliceDeg = (Math.abs(pieSerie.values[pi]) / pieTotal) * 360;
                 sliceBounds.push({ start: pieAngle, end: pieAngle + sliceDeg });
                 pieAngle += sliceDeg;
+            }
+
+            // The slice gap is specified in px; convert it to degrees from the rendered outer
+            // radius (gap arc length / circumference). The smallest slice never changes after
+            // render, so cap once here; the radius only changes on resize, so the resulting
+            // gapDeg is cached in `pieGapDeg` and recomputed only when we repaint.
+            // Slice gaps only apply to donuts (innerRadius > 0). On a full pie the transparent
+            // wedges would expose the chart background as thin spokes meeting at the centre, which
+            // reads as noise; the hole of a donut gives the gaps a clean inner edge.
+            var pieHasGap = gap > 0 && pieSerie.values.length > 1 && config.pie.innerRadius > 0;
+            var pieMinSliceDeg = 360;
+            for (var pmi = 0; pmi < sliceBounds.length; pmi++) {
+                var pmd = sliceBounds[pmi].end - sliceBounds[pmi].start;
+                if (pmd < pieMinSliceDeg) pieMinSliceDeg = pmd;
+            }
+            var pieGapDeg = 0;
+            function computeGapDeg() {
+                if (!pieHasGap) return 0;
+                var r = pieRing.getBoundingClientRect().width / 2;
+                if (r <= 0) return 0;
+                var deg = (gap / (2 * Math.PI * r)) * 360;
+                // Never let gaps eat a whole slice: cap at half the smallest slice.
+                return Math.min(deg, pieMinSliceDeg / 2);
+            }
+            function paintPieRing() {
+                pieGapDeg = computeGapDeg();
+                // The donut mask lives in a separate style property, so overwriting `background`
+                // here leaves it intact.
+                pieRing.style.background = 'conic-gradient(from 0deg,' + pieSliceStops(pieSerie, pieTotal, pieGapDeg) + ')';
+            }
+            if (pieHasGap) {
+                // Paint once now, and again next frame: at init the ring may not be laid out yet
+                // (radius 0 ⇒ no gap), so the deferred pass applies the gap once a size is known.
+                paintPieRing();
+                if (typeof requestAnimationFrame !== 'undefined') requestAnimationFrame(paintPieRing);
+                // The pie claims the single shared resize observer, so it must also drive the
+                // legend auto-hide that the fallback at the end of render() would otherwise own.
+                observeResize(function () { paintPieRing(); toggleLegend(element); });
             }
 
             function getPieSliceIndex(e) {
@@ -1840,11 +1939,13 @@
                 for (var t = 0; t < pieTips.length; t++) {
                     pieTips[t].style.display = t === idx ? '' : 'none';
                 }
-                // Highlight overlay
+                // Highlight overlay — inset by the same half-gap (cached, no reflow) so it matches
+                // the visible slice exactly, via the shared insetSlice helper.
                 if (idx >= 0 && pieHighlight) {
                     var s = sliceBounds[idx];
+                    var h = pieGapDeg > 0 ? insetSlice(s.start, s.end, pieGapDeg / 2) : s;
                     var hlColor = 'var(--nc-highlight-overlay, rgba(255,255,255,0.15))';
-                    pieHighlight.style.background = 'conic-gradient(from 0deg, transparent ' + toFixed3(s.start) + 'deg, ' + hlColor + ' ' + toFixed3(s.start) + 'deg ' + toFixed3(s.end) + 'deg, transparent ' + toFixed3(s.end) + 'deg)';
+                    pieHighlight.style.background = 'conic-gradient(from 0deg, transparent ' + toFixed3(h.start) + 'deg, ' + hlColor + ' ' + toFixed3(h.start) + 'deg ' + toFixed3(h.end) + 'deg, transparent ' + toFixed3(h.end) + 'deg)';
                     pieHighlight.style.display = '';
                 } else if (pieHighlight) {
                     pieHighlight.style.display = 'none';
