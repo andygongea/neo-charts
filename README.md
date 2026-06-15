@@ -10,7 +10,7 @@ Lightweight HTML/CSS chart library with zero dependencies. No SVG, no Canvas —
 - **Pixel-perfect** — every item gets the same integer pixel size for crisp, even shapes (column, bar, funnel); any leftover pixels trail as space at the end
 - **Animated** — entry animations and smooth hover transitions
 - **Interactive** — tooltips on hover, highlight mode with bidirectional label sync (bar/waterfall)
-- **Configurable** — gap between items, gauge thickness, default color palette, light/dark themes
+- **Configurable** — gradient or flat fills, gap between items, gauge thickness, default color palette, light/dark themes
 - **12 chart types** — column, bar, line, area, progress, waterfall, heatmap, treemap, gauge, pie (with donut variant), bullet, funnel (with trapezoid variant)
 - **Multi-series** — grouped and stacked modes for column and bar charts
 
@@ -386,9 +386,10 @@ neoCharts('.chart', {
 | `highlight` | boolean | `false` | Dim sibling items on hover (bidirectional for bar/waterfall labels) |
 | `animate` | boolean | `true` | Animate items on initial render |
 | `legend` | boolean | `true` | Show legend when applicable. Auto-hidden if it would occupy more than a third of the chart height. |
+| `gradient` | boolean | `true` | Apply a subtle gradient fade to data fills (column, bar, progress, waterfall, treemap, funnel, pie/donut). Set `false` for flat solid fills. |
 | `smooth` | boolean | `false` | Use smooth curves for line/area charts |
 | `fit` | boolean | `false` | Fit chart to container |
-| `gap` | number | `2` | Gap in pixels between chart items. Applies to `column`, `bar`, `treemap`, `heatmap`, and `donut` (spacing between slices; donut only — ignored on a full pie). |
+| `gap` | number | `2` | Gap in pixels between chart items. Applies to `column`, `bar`, `waterfall`, `treemap`, `heatmap`, and `donut` (spacing between slices; donut only — ignored on a full pie). |
 | `theme` | string | `'dark'` | Color theme: `'dark'` or `'light'` |
 | `gauge.thickness` | number | `14` | Gauge ring thickness in pixels |
 | `gauge.valueFontSize` | number | `48` | Gauge value font size in pixels |
@@ -420,16 +421,16 @@ neoCharts('.chart', {
 | `values` | number[] | Data values |
 | `labels` | string[] | Label for each value |
 | `outputValues` | string[] | Custom display values (e.g. `['1.2K', '3.4M']`). Falls back to raw values if empty. |
-| `color` | string[] | One color for the whole series, or one per item. When omitted, a built-in 10-color palette is used automatically (cycled by item, or by series index for line/area). |
+| `color` | string[] | One color for the whole series, or one per item. When omitted, a built-in 20-color palette is used automatically (cycled by item, or by series index for line/area). |
 | `prefix` | string | Prepended to displayed values (e.g. `'$'`) |
 | `suffix` | string | Appended to displayed values (e.g. `'%'`) |
 | `decimals` | number | Decimal places in tooltips (default: `3`) |
 
 ### Default Color Palette
 
-When no `color` array is provided, items cycle through this 10-color palette:
+When no `color` array is provided, items cycle through this 20-color palette:
 
-`#3b82f6` `#10b981` `#f59e0b` `#ef4444` `#8b5cf6` `#ec4899` `#06b6d4` `#f97316` `#6366f1` `#14b8a6`
+`#eb453b` `#009ab0` `#9566f5` `#669c00` `#d847a7` `#00a081` `#c37300` `#3d82ff` `#0090df` `#7174ff` `#b25ae1` `#0096c3` `#c750c6` `#00a621` `#00a366` `#009e93` `#009ca2` `#e65000` `#d26600` `#e1428d`
 
 ## API
 

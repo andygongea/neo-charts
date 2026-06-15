@@ -15,7 +15,7 @@
 .nc-chart-body { flex:1; min-height:0; display:flex; flex-direction:column; }
 .nc-empty { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:400; color:var(--nc-text-faint); margin:0; }
 
-.nc-item { background-color:#3b82f6; cursor:pointer; }
+.nc-item { background-color:#eb453b; cursor:pointer; }
 .nc-item:hover { z-index:1000; }
 .nc-item:hover .nc-tooltip { display:block; }
 .nc-stack:hover { z-index:1000; }

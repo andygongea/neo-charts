@@ -50,13 +50,13 @@
         .theme-toggle:hover { border-color: var(--accent); color: var(--heading); }
 
         /* Column header strip */
-        .col-head { display: grid; grid-template-columns: 1.1fr 1.1fr 1fr; gap: 20px; padding: 0 4px 12px; position: sticky; top: 0; background: var(--bg); z-index: 5; }
+        .col-head { display: grid; grid-template-columns: 1.5fr 0.9fr 0.85fr; gap: 20px; padding: 0 4px 12px; position: sticky; top: 0; background: var(--bg); z-index: 5; }
         .col-head span { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); }
 
         /* Each type row */
         .row { margin-bottom: 28px; }
         .row-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); margin-bottom: 12px; padding-left: 4px; }
-        .row-grid { display: grid; grid-template-columns: 1.1fr 1.1fr 1fr; gap: 20px; align-items: stretch; }
+        .row-grid { display: grid; grid-template-columns: 1.5fr 0.9fr 0.85fr; gap: 20px; align-items: stretch; }
 
         .cell { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; display: flex; flex-direction: column; min-height: 320px; }
         /* Config cell clips its scrolling editor; chart cell must let tooltips / bar values escape */
@@ -144,7 +144,7 @@
                     title: { text: 'Weekly Detections', align: 'center' },
                     type: 'column', highlight: true,
                     layout: { width: '100%', height: '260px' },
-                    data: { series: [{ title: 'Detections', values: [120, 450, 320, 780, 560], labels: ['Mon','Tue','Wed','Thu','Fri'], color: ['#3b82f6'], decimals: 0 }] }
+                    data: { series: [{ title: 'Detections', values: [120, 450, 320, 780, 560], labels: ['Mon','Tue','Wed','Thu','Fri'], decimals: 0 }] }
                 }
             },
             {
@@ -153,7 +153,7 @@
                     title: { text: 'Top Vectors', align: 'center' },
                     type: 'bar', highlight: true,
                     layout: { width: '100%', height: '260px' },
-                    data: { series: [{ title: 'CVEs', values: [3020, 1410, 965, 780, 640], labels: ['XSS','SQLi','RCE','Path Traversal','CSRF'], color: ['#ef4444','#f97316','#f59e0b','#10b981','#6366f1'], decimals: 0 }] }
+                    data: { series: [{ title: 'CVEs', values: [3020, 1410, 965, 780, 640], labels: ['XSS','SQLi','RCE','Path Traversal','CSRF'], decimals: 0 }] }
                 }
             },
             {
@@ -162,7 +162,7 @@
                     title: { text: 'Monthly Revenue', align: 'center' },
                     type: 'line', highlight: true,
                     layout: { width: '100%', height: '260px' },
-                    data: { series: [{ title: 'Revenue', values: [120, 450, 320, 780, 560, 920], labels: ['Jan','Feb','Mar','Apr','May','Jun'], color: ['#22d3ee'], prefix: '$', suffix: 'K', decimals: 0 }] }
+                    data: { series: [{ title: 'Revenue', values: [120, 450, 320, 780, 560, 920], labels: ['Jan','Feb','Mar','Apr','May','Jun'], prefix: '$', suffix: 'K', decimals: 0 }] }
                 }
             },
             {
@@ -171,7 +171,7 @@
                     title: { text: 'Active Users', align: 'center' },
                     type: 'area', highlight: true,
                     layout: { width: '100%', height: '260px' },
-                    data: { series: [{ title: 'Users', values: [100, 300, 250, 600, 450, 800], labels: ['Jan','Feb','Mar','Apr','May','Jun'], color: ['#a78bfa'], decimals: 0 }] }
+                    data: { series: [{ title: 'Users', values: [100, 300, 250, 600, 450, 800], labels: ['Jan','Feb','Mar','Apr','May','Jun'], decimals: 0 }] }
                 }
             },
             {
@@ -180,7 +180,7 @@
                     title: { text: 'Budget Allocation', align: 'center' },
                     type: 'progress', fit: true,
                     layout: { width: '100%', height: '260px' },
-                    data: { series: [{ title: 'Budget', values: [45, 30, 15, 10], labels: ['Engineering','Marketing','Sales','Other'], color: ['#3b82f6','#10b981','#f59e0b','#8b5cf6'], suffix: '%', decimals: 0 }] }
+                    data: { series: [{ title: 'Budget', values: [45, 30, 15, 10], labels: ['Engineering','Marketing','Sales','Other'], suffix: '%', decimals: 0 }] }
                 }
             },
             {
@@ -189,7 +189,7 @@
                     title: { text: 'Feature Impact', align: 'center' },
                     type: 'waterfall', highlight: true,
                     layout: { width: '100%' },
-                    data: { series: [{ title: 'Impact', values: [500, 300, 200, 150, 100], labels: ['Base','Feature A','Feature B','Feature C','Feature D'], color: ['#22d3ee','#34d399','#facc15','#a78bfa','#fb7185'], decimals: 0 }] }
+                    data: { series: [{ title: 'Impact', values: [360, 300, 250, 200, 160], labels: ['Base','Feature A','Feature B','Feature C','Feature D'], decimals: 0 }] }
                 }
             },
             {
@@ -199,9 +199,9 @@
                     type: 'heatmap', highlight: true,
                     layout: { width: '100%', height: '260px' },
                     data: { series: [
-                        { title: 'Mon', values: [2, 5, 12, 18, 8, 3], labels: ['6a','8a','10a','12p','2p','4p'], color: ['#22d3ee'] },
-                        { title: 'Tue', values: [1, 3, 8, 22, 11, 6], labels: ['6a','8a','10a','12p','2p','4p'], color: ['#22d3ee'] },
-                        { title: 'Wed', values: [3, 7, 14, 25, 13, 8], labels: ['6a','8a','10a','12p','2p','4p'], color: ['#22d3ee'] }
+                        { title: 'Mon', values: [2, 5, 12, 18, 8, 3], labels: ['6a','8a','10a','12p','2p','4p'] },
+                        { title: 'Tue', values: [1, 3, 8, 22, 11, 6], labels: ['6a','8a','10a','12p','2p','4p'] },
+                        { title: 'Wed', values: [3, 7, 14, 25, 13, 8], labels: ['6a','8a','10a','12p','2p','4p'] }
                     ] }
                 }
             },
@@ -211,7 +211,7 @@
                     title: { text: 'Disk Usage', align: 'center' },
                     type: 'treemap', highlight: true,
                     layout: { width: '100%', height: '260px' },
-                    data: { series: [{ title: 'Disk', values: [450, 320, 280, 180, 150], labels: ['Photos','Videos','Docs','Music','Apps'], outputValues: ['450 GB','320 GB','280 GB','180 GB','150 GB'], color: ['#3b82f6','#10b981','#f59e0b','#8b5cf6','#fb7185'] }] }
+                    data: { series: [{ title: 'Disk', values: [450, 320, 280, 180, 150], labels: ['Photos','Videos','Docs','Music','Apps'], outputValues: ['450 GB','320 GB','280 GB','180 GB','150 GB'] }] }
                 }
             },
             {
@@ -220,7 +220,7 @@
                     title: { text: 'Performance', align: 'center' },
                     type: 'gauge', gauge: { thickness: 14, valueFontSize: 44 },
                     layout: { width: '100%', height: '260px' },
-                    data: { series: [{ title: 'Score', values: [86, 0, 100], labels: ['Current','Min','Max'], outputValues: ['86%'], color: ['#22d3ee'], suffix: '%' }] }
+                    data: { series: [{ title: 'Score', values: [86, 0, 100], labels: ['Current','Min','Max'], outputValues: ['86%'], suffix: '%' }] }
                 }
             },
             {
@@ -229,7 +229,7 @@
                     title: { text: 'Market Share', align: 'center' },
                     type: 'pie', pie: { innerRadius: 0 },
                     layout: { width: '100%', height: '260px' },
-                    data: { series: [{ title: 'Share', values: [40, 30, 20, 10], labels: ['Chrome','Safari','Firefox','Other'], color: ['#3b82f6','#10b981','#f59e0b','#8b5cf6'], suffix: '%' }] }
+                    data: { series: [{ title: 'Share', values: [40, 30, 20, 10], labels: ['Chrome','Safari','Firefox','Other'], suffix: '%' }] }
                 }
             },
             {
@@ -238,7 +238,7 @@
                     title: { text: 'KPIs vs Target', align: 'left' },
                     type: 'bullet', bullet: { targets: [90, 85, 95], ranges: [60, 80, 100] },
                     layout: { width: '100%', height: '260px' },
-                    data: { series: [{ title: 'KPIs', values: [82, 71, 93], labels: ['Revenue','Profit','Satisfaction'], color: ['#3b82f6','#f59e0b','#10b981'], suffix: '%' }] }
+                    data: { series: [{ title: 'KPIs', values: [82, 71, 93], labels: ['Revenue','Profit','Satisfaction'], suffix: '%' }] }
                 }
             },
             {
@@ -247,7 +247,7 @@
                     title: { text: 'Sales Pipeline', align: 'center' },
                     type: 'funnel', funnel: { direction: 'vertical', flip: false, mode: 'funnel' },
                     layout: { width: '100%', height: '260px' },
-                    data: { series: [{ title: 'Pipeline', values: [1200, 800, 400, 120], labels: ['Visitors','Leads','Opportunities','Deals'], color: ['#6b7280','#3b82f6','#f59e0b','#10b981'], decimals: 0 }] }
+                    data: { series: [{ title: 'Pipeline', values: [1200, 800, 400, 120], labels: ['Visitors','Leads','Opportunities','Deals'], decimals: 0 }] }
                 }
             }
         ];
@@ -294,7 +294,8 @@
             line:      [toggle('Highlight', 'highlight'), toggle('Animate', 'animate'), toggle('Smooth curve', 'smooth')],
             area:      [toggle('Highlight', 'highlight'), toggle('Animate', 'animate'), toggle('Smooth curve', 'smooth')],
             progress:  [toggle('Highlight', 'highlight'), toggle('Animate', 'animate'), toggle('Fit height', 'fit')],
-            waterfall: [toggle('Highlight', 'highlight'), toggle('Animate', 'animate')],
+            waterfall: [toggle('Highlight', 'highlight'), toggle('Animate', 'animate'),
+                        range('Gap', 'gap', 0, 12, 1)],
             heatmap:   [toggle('Highlight', 'highlight'), toggle('Animate', 'animate'),
                         range('Gap', 'gap', 0, 12, 1)],
             treemap:   [toggle('Highlight', 'highlight'), toggle('Animate', 'animate'),
@@ -329,6 +330,9 @@
             return series.length >= 2;
         }
 
+        // Chart types whose data fills support the gradient option (matches the library).
+        var GRADIENT_TYPES = ['column', 'bar', 'progress', 'waterfall', 'treemap', 'funnel', 'pie'];
+
         function controlsFor(cfg) {
             var base = (CONTROLS[cfg.type] || []).slice();
             // Pie slice gaps only apply in donut mode, so only offer the Gap control when
@@ -336,6 +340,7 @@
             if (cfg.type === 'pie' && cfg.pie && cfg.pie.innerRadius > 0) {
                 base.push(range('Gap', 'gap', 0, 12, 1));
             }
+            if (GRADIENT_TYPES.indexOf(cfg.type) !== -1) base.push(toggle('Gradient', 'gradient'));
             if (legendWouldShow(cfg)) base.push(toggle('Legend', 'legend'));
             return base;
         }
@@ -432,7 +437,7 @@
                 var input = document.createElement('input');
                 input.type = 'checkbox';
                 // Mirror library defaults so unset options show their real state
-                var defaultTrue = (ctrl.path === 'animate' || ctrl.path === 'legend');
+                var defaultTrue = (ctrl.path === 'animate' || ctrl.path === 'legend' || ctrl.path === 'gradient');
                 input.checked = current === undefined ? defaultTrue : !!current;
                 var track = document.createElement('span');
                 track.className = 'track';
@@ -493,7 +498,6 @@
                 title: (primary.title || 'Series') + ' (B)',
                 values: vals,
                 labels: (primary.labels || []).slice(),
-                color: ['#f59e0b'],
                 prefix: primary.prefix || '',
                 suffix: primary.suffix || '',
                 decimals: primary.decimals != null ? primary.decimals : 3

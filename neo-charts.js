@@ -66,6 +66,7 @@
         highlight: false,
         animate: true,
         legend: true,
+        gradient: true,
         smooth: false,
         theme: 'dark',
         onClick: null,
@@ -131,7 +132,7 @@
     }
 
     // Brand default used internally when a series omits color (matches default palette[0])
-    var DEFAULT_COLOR = '#3b82f6';
+    var DEFAULT_COLOR = '#eb453b';
 
     // Whitelist a CSS length/keyword for safe inline-style injection (width/height)
     var _lengthRe = /^(auto|0|[-+]?[0-9]*\.?[0-9]+(px|em|rem|%|vw|vh|vmin|vmax|ch|ex|pt|pc|cm|mm|in)?|calc\([^"<>;{}]+\))$/;
@@ -154,14 +155,36 @@
         return (+value.toFixed(3)).toString();
     }
 
+    // Categorical palette: 20 hues at uniform OKLCH lightness/chroma (L≈0.63, C≈0.205 — vibrant but
+    // not garish), the yellow band skipped (it muddies at this lightness), and the order interleaved
+    // so adjacent series sit far apart on the hue wheel — neighbours never look alike. Each clears
+    // 3:1 non-text contrast on the light theme (#f9f9fa) and WCAG AA on dark (#1a1a2e).
     var defaultPalette = [
-        '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
-        '#ec4899', '#06b6d4', '#f97316', '#6366f1', '#14b8a6'
+        '#eb453b', '#009ab0', '#9566f5', '#669c00', '#d847a7',
+        '#00a081', '#c37300', '#3d82ff', '#0090df', '#7174ff',
+        '#b25ae1', '#0096c3', '#c750c6', '#00a621', '#00a366',
+        '#009e93', '#009ca2', '#e65000', '#d26600', '#e1428d'
     ];
 
-    function getColor(colorArray, i) {
-        return 'background-color:' + getColorValue(colorArray, i) + ';';
+    // Subtle vertical fade applied to data fills when gradients are enabled. A light-to-transparent
+    // overlay is layered on top of the solid base color, so it works for any CSS color format
+    // (hex/rgb/named) with no parsing and reads as the base color lightening toward the top.
+    // `angle` lets horizontal charts fade along their own axis; `gradient` (default true) gates it,
+    // returning the flat color when off. Returns just the CSS value (no property), for `background:`.
+    function gradientValue(color, angle, gradient) {
+        if (gradient === false) return color;
+        var a = angle == null ? '180deg' : angle;
+        return 'linear-gradient(' + a + ',rgba(255,255,255,.18),rgba(255,255,255,0)),' + color;
     }
+
+    function getColor(colorArray, i, angle, gradient) {
+        return 'background:' + gradientValue(getColorValue(colorArray, i), angle, gradient) + ';';
+    }
+
+    // Radial sheen layered on top of the pie/donut conic-gradient — the round-chart counterpart of
+    // the vertical fade, lightening from the centre outward. Prefix it before the conic-gradient
+    // (empty string when gradients are disabled).
+    var PIE_SHEEN = 'radial-gradient(circle closest-side,rgba(255,255,255,.16),rgba(255,255,255,0) 72%),';
 
     function getColorValue(colorArray, i) {
         if (colorArray.length === 0) return defaultPalette[i % defaultPalette.length];
@@ -200,6 +223,8 @@
         var series = config.data.series;
         var render = config.data.render;
         var type = config.type;
+        var useGradient = config.gradient !== false;
+        var pieSheen = useGradient ? PIE_SHEEN : '';
         var validTypes = ['column', 'bar', 'line', 'area', 'progress', 'waterfall', 'gauge', 'heatmap', 'treemap', 'pie', 'bullet', 'funnel', 'trapezoid'];
 
         // Warn on common misconfigurations
@@ -468,7 +493,7 @@
                 for (var idx = 0; idx < count; idx++) {
                     var val = series[idx].values[i];
                     var h = range > 0 ? toFixed3(Math.abs(val) / range * 100) : 0;
-                    var style = 'height:' + h + '%;' + getColor(series[idx].color, i) + delay(i);
+                    var style = 'height:' + h + '%;' + getColor(series[idx].color, i, null, useGradient) + delay(i);
                     if (hasNeg) {
                         if (val >= 0) {
                             style += 'bottom:' + toFixed3((-minValue) / range * 100) + '%;';
@@ -507,7 +532,7 @@
                     var h = serie.values[i] * 100 / maxStacked;
 
                     // Each segment carries the combined tooltip so it anchors to the hovered section
-                    items += '<div class="nc-item"' + dataAttr(s, i) + ' style="height:' + toFixed3(h) + '%;' + getColor(serie.color, i) + '">';
+                    items += '<div class="nc-item"' + dataAttr(s, i) + ' style="height:' + toFixed3(h) + '%;' + getColor(serie.color, i, null, useGradient) + '">';
                     items += renderItemContent(s, i, { hideLabel: true, hideValue: true });
                     items += '<div class="nc-tooltip">' + tipBody + '<div class="nc-tooltip-arrow"></div></div>';
                     items += '</div>';
@@ -533,7 +558,7 @@
                 for (var idx = 0; idx < count; idx++) {
                     var val = series[idx].values[i];
                     var w = range > 0 ? toFixed3(Math.abs(val) / range * 100) : 0;
-                    var style = 'width:' + w + '%;' + getColor(series[idx].color, i) + delay(i);
+                    var style = 'width:' + w + '%;' + getColor(series[idx].color, i, '90deg', useGradient) + delay(i);
                     if (hasNeg) {
                         if (val >= 0) {
                             style += 'margin-left:' + toFixed3((-minValue) / range * 100) + '%;';
@@ -562,7 +587,7 @@
                 html += '<div class="nc-stack">';
                 for (var s = 0; s < series.length; s++) {
                     var w = series[s].values[i] * 100 / maxStacked;
-                    html += '<div class="nc-item"' + dataAttr(s, i) + ' style="width:' + toFixed3(w) + '%;' + getColor(series[s].color, i) + '">';
+                    html += '<div class="nc-item"' + dataAttr(s, i) + ' style="width:' + toFixed3(w) + '%;' + getColor(series[s].color, i, '90deg', useGradient) + '">';
                     html += renderItemContent(s, i, { hideLabel: true, hideValue: true });
                     html += renderTooltip(s, i);
                     html += '</div>';
@@ -582,7 +607,7 @@
                 var left = 0;
 
                 for (var i = 0; i < len; i++) {
-                    var style = 'left:' + toFixed3(left) + '%;width:' + toFixed3(widths[i]) + '%;' + getColor(serie.color, i);
+                    var style = 'left:' + toFixed3(left) + '%;width:' + toFixed3(widths[i]) + '%;' + getColor(serie.color, i, '90deg', useGradient);
                     if (useZIndex) {
                         style += 'z-index:' + (len - i) + ';';
                     }
@@ -843,7 +868,7 @@
                 html += '<div class="nc-treemap-cell' + (tmTextCls ? ' ' + tmTextCls : '') + '"' + dataAttr(item.serieIdx, item.itemIdx) + ' style="'
                     + 'left:' + toFixed3(r.x) + '%;top:' + toFixed3(r.y) + '%;'
                     + 'width:' + toFixed3(r.w) + '%;height:' + toFixed3(r.h) + '%;'
-                    + 'background-color:' + item.color + ';'
+                    + 'background:' + gradientValue(item.color, null, useGradient) + ';'
                     + delay(i) + '">';
                 html += '<span class="nc-treemap-label">' + escapeHtml(item.label) + '</span>';
                 html += '<span class="nc-treemap-value">' + val + '</span>';
@@ -898,6 +923,12 @@
             return { start: s, end: e };
         }
 
+        // Conic-gradient slice boundaries are hard-edged and alias badly. Feathering each boundary
+        // over a fraction of a degree lets the gradient interpolate across the seam, smoothing it
+        // (a poor browser's man's antialiasing). The feather straddles the true boundary so slice
+        // sizes are unchanged; it's skipped when a slice is too thin to give up the degrees.
+        var PIE_AA_DEG = 0.5;
+
         // Build the conic-gradient color stops for a pie/donut, inserting a transparent wedge of
         // `gapDeg` degrees between adjacent slices (split symmetrically across each shared edge).
         // A single slice (or gapDeg <= 0) produces no gaps. Returns the comma-joined stop list.
@@ -910,6 +941,8 @@
                 var sliceAngle = (Math.abs(serie.values[i]) / total) * 360;
                 var endAngle = angle + sliceAngle;
                 var color = getColorValue(serie.color, i);
+                // Feather only when the slice can spare it on both sides (and there's a neighbour).
+                var aa = (n > 1 && sliceAngle > PIE_AA_DEG * 4) ? PIE_AA_DEG : 0;
                 if (halfGap > 0) {
                     // Shrink the slice on both sides; the freed degrees show through as the gap.
                     var inset = insetSlice(angle, endAngle, halfGap);
@@ -917,7 +950,9 @@
                     stops.push(color + ' ' + toFixed3(inset.start) + 'deg ' + toFixed3(inset.end) + 'deg');
                     stops.push('transparent ' + toFixed3(inset.end) + 'deg ' + toFixed3(endAngle) + 'deg');
                 } else {
-                    stops.push(color + ' ' + toFixed3(angle) + 'deg ' + toFixed3(endAngle) + 'deg');
+                    // Solid core inset by `aa`; the aa-wide bands at each boundary are left for the
+                    // gradient to blend this slice's colour into its neighbour's, softening the seam.
+                    stops.push(color + ' ' + toFixed3(angle + aa) + 'deg ' + toFixed3(endAngle - aa) + 'deg');
                 }
                 angle = endAngle;
             }
@@ -942,7 +977,7 @@
             // a 0deg gap so there is no flash of mis-sized slices before sizing runs.
             var stops = pieSliceStops(serie, total, 0);
 
-            var ringStyle = 'background:conic-gradient(from 0deg,' + stops + ')';
+            var ringStyle = 'background:' + pieSheen + 'conic-gradient(from 0deg,' + stops + ')';
             if (innerR > 0) {
                 ringStyle += ';' + donutMask(innerR);
             }
@@ -1098,7 +1133,7 @@
                 var fnTextCls = readableTextColor(color);
                 html += '<div class="nc-funnel-wrap"' + dataAttr(0, i) + '>';
                 html += '<div class="nc-funnel-item' + (fnTextCls ? ' ' + fnTextCls : '') + '"'
-                    + ' style="background-color:' + color + ';clip-path:' + clipPath + ';' + delay(i) + '">';
+                    + ' style="background:' + gradientValue(color, isHorizontal ? '90deg' : '180deg', useGradient) + ';clip-path:' + clipPath + ';' + delay(i) + '">';
                 html += '<span class="nc-funnel-label">' + escapeHtml(serie.labels[i]) + '</span>';
                 html += '<span class="nc-funnel-value">' + displayVal + '</span>';
                 html += '</div>';
@@ -1920,7 +1955,7 @@
                 pieGapDeg = computeGapDeg();
                 // The donut mask lives in a separate style property, so overwriting `background`
                 // here leaves it intact.
-                pieRing.style.background = 'conic-gradient(from 0deg,' + pieSliceStops(pieSerie, pieTotal, pieGapDeg) + ')';
+                pieRing.style.background = pieSheen + 'conic-gradient(from 0deg,' + pieSliceStops(pieSerie, pieTotal, pieGapDeg) + ')';
             }
             if (pieHasGap) {
                 // Paint once now, and again next frame: at init the ring may not be laid out yet
