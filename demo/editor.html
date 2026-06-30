@@ -1,0 +1,988 @@
+<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1"> <title>Neo Charts — Editor</title> <link rel="stylesheet" href="../neo-charts.css"> <style> * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--text); --bg: #111113; --text: #a0a0a6; --heading: #e4e4e7; --muted: rgba(255,255,255,.4); --card-bg: rgba(25,25,27,.95); --card-border: rgba(255,255,255,.07); --chart-surface: #1a1a2e; --accent: #22d3ee; --code-bg: rgba(0,0,0,.35); --code-text: #d4d4d8; --code-border: rgba(255,255,255,.08); --input-bg: rgba(0,0,0,.25); --row-alt: rgba(255,255,255,.02); --danger: #f87171; --ok: #34d399; background-color: var(--bg); -webkit-font-smoothing: antialiased; transition: background-color .3s, color .3s; }
+        body.light { --bg: #ededee; --text: #505055; --heading: #1c1c1e; --muted: rgba(0,0,0,.4); --card-bg: #f9f9fa; --card-border: rgba(0,0,0,.08); --chart-surface: #ffffff; --accent: #0891b2; --code-bg: rgba(0,0,0,.04); --code-text: #27272a; --code-border: rgba(0,0,0,.1); --input-bg: #ffffff; --row-alt: rgba(0,0,0,.02); --danger: #dc2626; --ok: #059669; }
+
+        .wrap { max-width: 1680px; margin: 0 auto; padding: 36px 32px 64px; }
+
+        header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 28px; padding-bottom: 22px; border-bottom: 1px solid var(--card-border); }
+        header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; color: var(--heading); }
+        header h1 span { color: var(--accent); }
+        header p { max-width: 620px; margin-top: 8px; font-size: 13px; color: var(--muted); }
+
+        .header-actions { display: flex; align-items: center; gap: 10px; }
+        .theme-toggle { padding: 8px 16px; border: 1px solid var(--card-border); border-radius: 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; color: var(--muted); background: var(--card-bg); cursor: pointer; transition: border-color .2s, color .2s; }
+        .theme-toggle:hover { border-color: var(--accent); color: var(--heading); }
+        .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+        /* ── 3-column layout ── */
+        .layout { display: grid; align-items: start; grid-template-columns: 320px minmax(0, 1fr); gap: 22px; }
+
+        .panel { border: 1px solid var(--card-border); border-radius: 14px; overflow: hidden; background: var(--card-bg); }
+        .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--card-border); }
+        .panel-head h2 { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+        .panel-head .hint { font-size: 10px; color: var(--muted); }
+        /* Chart-type segmented icon toggle in the preview header */
+        .type-toggle { display: flex; flex-wrap: wrap; gap: 2px; padding: 3px; border: 1px solid var(--card-border); border-radius: 9px; background: var(--input-bg); }
+        .type-btn { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 28px; padding: 0; border: 1px solid transparent; border-radius: 6px; color: var(--muted); background: transparent; cursor: pointer; transition: color .15s, background .15s, border-color .15s; }
+        .type-btn svg { width: 17px; height: 17px; display: block; }
+        .type-btn:hover { color: var(--heading); background: var(--row-alt); }
+        .type-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+        .type-btn.is-active { color: #fff; background: var(--accent); border-color: var(--accent); }
+        body.light .type-btn.is-active { color: #fff; }
+        .preview-head { flex-wrap: wrap; row-gap: 10px; }
+
+        /* sticky side columns on tall screens */
+        .col-left { position: sticky; top: 20px; }
+        .col-left .panel-body { max-height: calc(100vh - 120px); overflow: auto; }
+
+        .panel-body { padding: 4px 18px 16px; }
+
+        /* ── Control groups ── */
+        .group { padding: 12px 0; border-bottom: 1px solid var(--card-border); }
+        .group:last-child { border-bottom: none; }
+        .group-title { margin-bottom: 8px; font-size: 9px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; color: var(--accent); }
+
+        .setting { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 7px 0; }
+        .setting-label { font-size: 12px; white-space: nowrap; color: var(--text); }
+        .setting-label code { display: block; margin-top: 1px; font-family: 'SF Mono', ui-monospace, Menlo, monospace; font-size: 10px; color: var(--muted); }
+        .setting-control { display: flex; flex-shrink: 0; align-items: center; gap: 8px; }
+        .setting.stack { display: block; }
+        .setting.stack .setting-control { margin-top: 6px; }
+
+        /* Toggle switch (from demo2) */
+        .sw { flex-shrink: 0; position: relative; width: 38px; height: 22px; }
+        .sw input { opacity: 0; width: 0; height: 0; }
+        .sw .track { position: absolute; inset: 0; border-radius: 22px; background: var(--card-border); transition: background .2s; cursor: pointer; }
+        .sw .track::before { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; content: ''; background: #fff; transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+        .sw input:checked + .track { background: var(--accent); }
+        .sw input:checked + .track::before { transform: translateX(16px); }
+        .sw input:focus-visible + .track { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+        select, input[type=text], input[type=number], textarea { font-family: inherit; }
+        select, .txt { padding: 6px 8px; border: 1px solid var(--card-border); border-radius: 6px; outline: none; font-size: 12px; color: var(--text); background: var(--input-bg); transition: border-color .15s; }
+        select { cursor: pointer; }
+        select:focus, .txt:focus { border-color: var(--accent); }
+        .txt.sm { width: 84px; }
+        .txt.full { width: 100%; }
+
+        input[type=range] { width: 96px; accent-color: var(--accent); cursor: pointer; }
+        .range-val { min-width: 28px; font-size: 11px; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 12px; border: 1px solid var(--card-border); border-radius: 7px; font-size: 11.5px; font-weight: 600; color: var(--text); background: var(--input-bg); cursor: pointer; transition: border-color .15s, color .15s, background .15s; }
+        .btn:hover { border-color: var(--accent); color: var(--heading); }
+        .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+        .btn:active { transform: translateY(1px); }
+        .btn.accent { border-color: var(--accent); color: #08252b; background: var(--accent); }
+        body.light .btn.accent { color: #042f38; }
+        .btn.accent:hover { opacity: .92; color: #000; }
+        .btn.tiny { padding: 4px 9px; font-size: 11px; }
+        .btn.danger { color: var(--danger); }
+        .btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+        .btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+        /* ── Chart preview ── */
+        .col-center { display: flex; flex-direction: column; gap: 22px; }
+        .preview-host { display: flex; min-height: 340px; padding: 18px; }
+        .preview-host > .chart-mount { display: flex; flex: 1; min-width: 0; }
+        .preview-host > .chart-mount > .nc-chart { flex: 1; }
+
+        /* ── Tabs (series editor) ── */
+        .tabs { display: flex; gap: 4px; }
+        .tab { padding: 6px 12px; border: 1px solid transparent; border-radius: 7px 7px 0 0; font-size: 11px; font-weight: 600; letter-spacing: .4px; color: var(--muted); background: transparent; cursor: pointer; }
+        .tab:hover { color: var(--text); }
+        .tab.is-active { border-color: var(--card-border); color: var(--heading); border-bottom-color: transparent; background: var(--input-bg); }
+        .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+        .tabpane { display: none; }
+        .tabpane.is-active { display: block; }
+
+        /* ── Series grid ── */
+        .series-block { margin-bottom: 14px; border: 1px solid var(--card-border); border-radius: 10px; overflow: hidden; }
+        .series-block:last-of-type { margin-bottom: 10px; }
+        .series-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 12px; background: var(--row-alt); }
+        .series-head .series-idx { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); }
+        .series-meta { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 12px 4px; }
+        .field { display: flex; flex-direction: column; gap: 3px; }
+        .field label { font-size: 9.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+        .field .txt { width: 100%; }
+        .field.grow { flex: 1 1 140px; }
+        .field.tiny .txt { width: 64px; }
+
+        table.grid { width: 100%; font-size: 12px; border-collapse: collapse; }
+        table.grid th { padding: 8px 10px 6px; font-size: 9px; font-weight: 700; letter-spacing: 1px; text-align: left; text-transform: uppercase; color: var(--muted); }
+        table.grid td { padding: 4px 8px; border-top: 1px solid var(--card-border); }
+        table.grid tr:nth-child(even) td { background: var(--row-alt); }
+        table.grid .txt { width: 100%; }
+        table.grid td.swatch-cell { width: 96px; }
+        table.grid td.act-cell { width: 36px; text-align: center; }
+        .cell-color { display: flex; align-items: center; gap: 6px; }
+        input[type=color] { flex-shrink: 0; width: 26px; height: 26px; padding: 0; border: 1px solid var(--card-border); border-radius: 6px; background: var(--input-bg); cursor: pointer; }
+        input[type=color]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+        .hex { width: 78px; }
+        .icon-btn { width: 26px; height: 26px; padding: 0; border-radius: 6px; line-height: 1; }
+        .series-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding: 8px 12px 12px; }
+
+        .grid-toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+        .color-mode { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted); }
+
+        /* ── Raw paste ── */
+        .raw-area { width: 100%; min-height: 200px; padding: 12px 14px; border: 1px solid var(--code-border); border-radius: 8px; outline: none; font-family: 'SF Mono', ui-monospace, 'Cascadia Code', Menlo, Consolas, monospace; font-size: 12px; line-height: 1.55; color: var(--code-text); resize: vertical; background: var(--code-bg); tab-size: 2; }
+        .raw-area:focus { border-color: var(--accent); }
+        .raw-area.invalid { box-shadow: inset 0 0 0 2px rgba(248,113,113,.5); }
+        .raw-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 10px; }
+        .status { min-height: 16px; font-size: 11px; color: var(--muted); }
+        .status.ok { color: var(--ok); }
+        .status.err { color: var(--danger); }
+        .raw-hint { margin-top: 10px; font-size: 10.5px; line-height: 1.6; color: var(--muted); }
+        .raw-hint code { padding: 1px 4px; border-radius: 3px; font-family: 'SF Mono', ui-monospace, Menlo, monospace; color: var(--text); background: var(--input-bg); }
+
+        /* ── Config panel (collapsible) ── */
+        .panel.config-panel { overflow: visible; }
+        .config-summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 18px; cursor: pointer; list-style: none; user-select: none; }
+        .config-summary::-webkit-details-marker { display: none; }
+        .config-summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 14px; }
+        .config-summary .summary-left { display: flex; align-items: center; gap: 10px; }
+        .config-summary h2 { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+        .config-summary .hint { font-size: 10px; color: var(--muted); }
+        .config-chevron { flex-shrink: 0; width: 14px; height: 14px; color: var(--muted); transition: transform .2s; }
+        details[open] .config-chevron { transform: rotate(90deg); }
+        details[open] .config-summary { border-bottom: 1px solid var(--card-border); }
+        .config-pre { display: block; width: 100%; max-height: 60vh; margin: 0; padding: 14px 16px; border: 1px solid var(--code-border); border-radius: 8px; overflow: auto; font-family: 'SF Mono', ui-monospace, 'Cascadia Code', Menlo, Consolas, monospace; font-size: 11.5px; line-height: 1.6; white-space: pre; color: var(--code-text); background: var(--code-bg); tab-size: 2; }
+        .config-pre .k { color: var(--accent); }
+        .config-pre .s { color: #86c06a; }
+        .config-pre .n { color: #e0a458; }
+        .config-pre .b { color: #c084fc; }
+        body.light .config-pre .s { color: #15803d; }
+        body.light .config-pre .n { color: #b45309; }
+        body.light .config-pre .b { color: #7c3aed; }
+        .config-actions { display: flex; gap: 8px; padding: 12px 18px 4px; }
+        .config-actions .btn { flex: 1; }
+        .config-note { padding: 6px 18px 14px; font-size: 10.5px; line-height: 1.6; color: var(--muted); }
+        .panel-body.flush-top { padding-top: 0; }
+        .flex-spacer { flex: 1; }
+        .swatch-label { font-size: 10px; color: var(--muted); }
+        .offscreen { opacity: 0; position: fixed; pointer-events: none; }
+
+        footer { margin-top: 40px; padding-top: 22px; border-top: 1px solid var(--card-border); font-size: 12px; text-align: center; color: var(--muted); }
+        footer a { text-decoration: none; color: var(--accent); }
+
+        @media (max-width: 1240px) {
+            .layout { grid-template-columns: 300px minmax(0, 1fr); }
+        }
+        @media (max-width: 980px) {
+            .wrap { padding: 24px 18px 48px; }
+            .layout { grid-template-columns: 1fr; }
+            .col-left { position: static; }
+            .col-left .panel-body { max-height: none; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+        }
+    </style> </head> <body> <div class="wrap"> <header> <div> <h1>Neo Charts <span>—</span> Editor</h1> <p>Tweak the look &amp; feel, paste or edit your series, and copy a ready-to-use config. Every change re-renders live.</p> </div> <div class="header-actions"> <button class="theme-toggle" type="button" id="themeToggle" aria-label="Toggle light or dark theme">Toggle theme</button> </div> </header> <div class="layout"> <!-- ── LEFT: Look & feel ── --> <div class="col-left"> <section class="panel" aria-labelledby="lf-title"> <div class="panel-head"><h2 id="lf-title">Look &amp; feel</h2><span class="hint">live</span></div> <div class="panel-body" id="controls"></div> </section> </div> <!-- ── CENTER: chart + series editor ── --> <div class="col-center"> <section class="panel" aria-labelledby="preview-title"> <div class="panel-head preview-head"><h2 id="preview-title">Column</h2><div class="type-toggle" id="typeToggle" role="radiogroup" aria-label="Chart type"></div></div> <div class="preview-host"><div class="chart-mount" id="chart"></div></div> </section> <details class="panel config-panel" id="configPanel"> <summary class="config-summary"> <span class="summary-left"> <svg class="config-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4l4 4-4 4"/></svg> <h2 id="cfg-title">Config</h2> </span> <span class="hint">live · read-only</span> </summary> <div class="config-actions"> <button class="btn" type="button" id="copyJson">Copy JSON</button> <button class="btn" type="button" id="copySnippet">Copy snippet</button> </div> <p class="config-note">Exactly what is passed to <code>neoCharts()</code>. Edit it by toggling controls or the series editor below.</p> <div class="panel-body flush-top"> <pre class="config-pre" id="configView" tabindex="0" aria-label="Live chart configuration as JSON"></pre> </div> </details> <section class="panel" aria-labelledby="series-title"> <div class="panel-head"> <h2 id="series-title">Series editor</h2> <div class="tabs" role="tablist" aria-label="Series editor mode"> <button class="tab is-active" type="button" role="tab" id="tab-grid" aria-selected="true" aria-controls="pane-grid" data-tab="grid">Grid</button> <button class="tab" type="button" role="tab" id="tab-raw" aria-selected="false" aria-controls="pane-raw" data-tab="raw">Raw paste</button> </div> </div> <div class="panel-body"> <div class="tabpane is-active" id="pane-grid" role="tabpanel" aria-labelledby="tab-grid"> <div class="grid-toolbar"> <div class="color-mode" id="colorModeWrap"></div> <div class="btn-row" id="paletteActions"></div> </div> <div id="seriesGrid"></div> <div class="btn-row"> <button class="btn accent" type="button" id="addSeries">+ Add series</button> </div> </div> <div class="tabpane" id="pane-raw" role="tabpanel" aria-labelledby="tab-raw"> <textarea class="raw-area" id="rawArea" spellcheck="false" aria-label="Paste series as JSON or CSV" placeholder="Paste JSON (a data.series array or a single series object) — or CSV/TSV:&#10;&#10;Month,Revenue&#10;Jan,120&#10;Feb,450&#10;Mar,320"></textarea> <div class="raw-toolbar"> <button class="btn accent" type="button" id="rawApply">Apply to chart</button> <button class="btn" type="button" id="rawFromConfig">Load current series</button> <span class="status" id="rawStatus" role="status" aria-live="polite"></span> </div> <p class="raw-hint"> <strong>JSON</strong>: a full <code>[ { title, values, labels, ...; } ]</code> array or a single series object.<br>
+                                <strong>CSV / TSV</strong>: first column = labels, each following column = one series of values. An optional header row names the series.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <footer>
+            <p>Built with <a href="https://github.com/andygongea/neo-charts">Neo Charts</a> — zero-dependency HTML/CSS charting</p>
+        </footer>
+    </div>
+
+    <script src="../neo-charts.js"></script>
+    <script>
+    (function () {
+        'use strict';
+
+        // ── Default 20-color palette (must match the library) ──
+        var PALETTE = ['#eb453b','#009ab0','#9566f5','#669c00','#d847a7','#00a081','#c37300','#3d82ff','#0090df','#7174ff','#b25ae1','#0096c3','#c750c6','#00a621','#00a366','#009e93','#009ca2','#e65000','#d26600','#e1428d'];
+
+        var ALL_TYPES = ['column','bar','line','area','progress','waterfall','heatmap','treemap','gauge','pie','bullet','funnel'];
+
+        // Compact 24×24 icons per chart type (currentColor so they follow the button state).
+        var TYPE_ICONS = {
+            column:    '<rect x="3" y="11" width="4" height="9" rx="1"/><rect x="10" y="6" width="4" height="14" rx="1"/><rect x="17" y="9" width="4" height="11" rx="1"/>',
+            bar:       '<rect x="4" y="4" width="14" height="4" rx="1"/><rect x="4" y="10" width="9" height="4" rx="1"/><rect x="4" y="16" width="17" height="4" rx="1"/>',
+            line:      '<polyline points="3 16 9 9 13 13 21 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+            area:      '<path d="M3 16 9 9 13 13 21 4V20H3Z" fill="currentColor" opacity=".35"/><polyline points="3 16 9 9 13 13 21 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+            progress:  '<rect x="3" y="9" width="18" height="6" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="9" width="11" height="6" rx="3"/>',
+            waterfall: '<rect x="3" y="4" width="4" height="6" rx="1"/><rect x="10" y="8" width="4" height="6" rx="1"/><rect x="17" y="12" width="4" height="6" rx="1"/>',
+            heatmap:   '<rect x="3" y="3" width="7" height="7" rx="1" opacity=".4"/><rect x="11" y="3" width="7" height="7" rx="1"/><rect x="3" y="11" width="7" height="7" rx="1"/><rect x="11" y="11" width="7" height="7" rx="1" opacity=".4"/>',
+            treemap:   '<rect x="3" y="3" width="11" height="11" rx="1"/><rect x="15" y="3" width="6" height="6" rx="1" opacity=".6"/><rect x="15" y="10" width="6" height="4" rx="1" opacity=".4"/><rect x="3" y="15" width="18" height="6" rx="1" opacity=".3"/>',
+            gauge:     '<path d="M4 17a8 8 0 0 1 16 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="17" x2="16" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+            pie:       '<path d="M12 3a9 9 0 1 0 9 9h-9Z" fill="currentColor"/><path d="M12 3v9h9A9 9 0 0 0 12 3Z" fill="currentColor" opacity=".4"/>',
+            bullet:    '<rect x="3" y="9" width="18" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="9" width="11" height="6" rx="1"/><line x1="17" y1="6" x2="17" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+            funnel:    '<path d="M3 4h18l-6 8v6l-6 3v-9L3 4Z" fill="currentColor"/>'
+        };
+        function typeLabel(t) { return t.charAt(0).toUpperCase() + t.slice(1); }
+
+        // ── Single source of truth ──
+        var config = {
+            type: 'column',
+            theme: 'dark',
+            title: { text: 'Quarterly Revenue', subtitle: '', align: 'center' },
+            layout: { width: '100%', height: '300px', lines: { number: 4, align: 'right' } },
+            highlight: false, animate: true, legend: true, gradient: true, smooth: false, fit: false,
+            data: {
+                render: { stacked: false },
+                series: [
+                    { title: 'Revenue', values: [120, 450, 320, 780, 560], labels: ['Mon','Tue','Wed','Thu','Fri'], decimals: 0 }
+                ]
+            }
+        };
+
+        var chart = null;
+        var activeTab = 'grid';
+
+        // ── Helpers ──
+        function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
+        function $(sel) { return document.querySelector(sel); }
+        function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
+
+        function getPath(obj, path) {
+            var parts = path.split('.');
+            for (var i = 0; i < parts.length && obj != null; i++) obj = obj[parts[i]];
+            return obj;
+        }
+        function setPath(obj, path, value) {
+            var parts = path.split('.');
+            for (var i = 0; i < parts.length - 1; i++) {
+                if (obj[parts[i]] == null || typeof obj[parts[i]] !== 'object') obj[parts[i]] = {};
+                obj = obj[parts[i]];
+            }
+            obj[parts[parts.length - 1]] = value;
+        }
+
+        // ── Per-type sensible default series ──
+        function defaultSeriesFor(type) {
+            switch (type) {
+                case 'gauge':
+                    return [{ title: 'Performance', values: [86, 0, 100], labels: ['Current','Min','Max'], outputValues: ['86%'], suffix: '%', decimals: 0 }];
+                case 'heatmap':
+                    return [
+                        { title: 'Mon', values: [2, 5, 12, 18, 8, 3], labels: ['6a','8a','10a','12p','2p','4p'], decimals: 0 },
+                        { title: 'Tue', values: [1, 3, 8, 22, 11, 6], labels: ['6a','8a','10a','12p','2p','4p'], decimals: 0 },
+                        { title: 'Wed', values: [3, 7, 14, 25, 13, 8], labels: ['6a','8a','10a','12p','2p','4p'], decimals: 0 }
+                    ];
+                case 'pie':
+                    return [{ title: 'Market Share', values: [40, 30, 20, 10], labels: ['Chrome','Safari','Firefox','Other'], suffix: '%', decimals: 0 }];
+                case 'funnel':
+                    return [{ title: 'Pipeline', values: [1200, 800, 400, 120], labels: ['Visitors','Leads','Opportunities','Deals'], decimals: 0 }];
+                case 'bullet':
+                    return [{ title: 'KPIs', values: [82, 71, 93], labels: ['Revenue','Profit','Satisfaction'], suffix: '%', decimals: 0 }];
+                case 'treemap':
+                    return [{ title: 'Disk', values: [450, 320, 280, 180, 150], labels: ['Photos','Videos','Docs','Music','Apps'], outputValues: ['450 GB','320 GB','280 GB','180 GB','150 GB'], decimals: 0 }];
+                case 'waterfall':
+                    return [{ title: 'Impact', values: [360, 300, 250, 200, 160], labels: ['Base','Feature A','Feature B','Feature C','Feature D'], decimals: 0 }];
+                case 'progress':
+                    return [{ title: 'Budget', values: [45, 30, 15, 10], labels: ['Engineering','Marketing','Sales','Other'], suffix: '%', decimals: 0 }];
+                default:
+                    return [{ title: 'Revenue', values: [120, 450, 320, 780, 560], labels: ['Mon','Tue','Wed','Thu','Fri'], decimals: 0 }];
+            }
+        }
+
+        // Decide whether existing series can sensibly carry into the new type.
+        function seriesCompatible(newType, series) {
+            if (!series || !series.length) return false;
+            var s0 = series[0];
+            if (!s0.values || !s0.values.length) return false;
+            // gauge wants exactly one series of [current, min, max] with min <= current <= max
+            if (newType === 'gauge') {
+                if (series.length !== 1 || s0.values.length !== 3) return false;
+                var cur = s0.values[0], mn = s0.values[1], mx = s0.values[2];
+                return mn < mx && cur >= mn && cur <= mx;
+            }
+            // if currently a gauge shape, it rarely makes sense elsewhere
+            var looksLikeGauge = series.length === 1 && s0.values.length === 3 && s0.labels && s0.labels[0] === 'Current';
+            if (newType !== 'gauge' && looksLikeGauge) return false;
+            // proportional types: must be non-negative
+            if (newType === 'pie' || newType === 'funnel' || newType === 'treemap') {
+                return series.every(function (s) { return (s.values || []).every(function (v) { return v >= 0; }); });
+            }
+            return true;
+        }
+
+        function switchType(newType) {
+            var prev = config.type;
+            config.type = newType;
+            ensureTypeNamespaces();
+            // Title default swap only if user kept a default-ish title for the prior type.
+            if (!seriesCompatible(newType, config.data.series)) {
+                config.data.series = defaultSeriesFor(newType);
+                // refresh the title text to match the new dataset, but only if it still
+                // equals a known default (don't clobber a custom title the user typed)
+                var defTitles = { column:'Quarterly Revenue', gauge:'Performance', heatmap:'Traffic by Hour', pie:'Market Share', funnel:'Sales Pipeline', bullet:'KPIs vs Target', treemap:'Disk Usage', waterfall:'Feature Impact', progress:'Budget Allocation' };
+                if (KNOWN_TITLES.indexOf(config.title.text) !== -1) {
+                    config.title.text = defTitles[newType] || config.title.text;
+                    if (KNOWN_TITLES.indexOf(config.title.text) === -1) KNOWN_TITLES.push(config.title.text);
+                }
+            }
+        }
+
+        var KNOWN_TITLES = ['Quarterly Revenue','Performance','Traffic by Hour','Market Share','Sales Pipeline','KPIs vs Target','Disk Usage','Feature Impact','Budget Allocation'];
+
+        // Make sure type-specific option namespaces exist (for controls + config view)
+        function ensureTypeNamespaces() {
+            var t = config.type;
+            if ((t === 'gauge') && !config.gauge) config.gauge = { thickness: 14, valueFontSize: 48 };
+            if ((t === 'pie') && !config.pie) config.pie = { innerRadius: 0 };
+            if ((t === 'funnel') && !config.funnel) config.funnel = { direction: 'vertical', flip: false, mode: 'funnel' };
+            if ((t === 'bullet') && !config.bullet) config.bullet = { targets: [], ranges: [] };
+        }
+
+        // ── Render ──
+        function withTheme(cfg) {
+            var c = deepClone(cfg);
+            c.theme = config.theme;
+            return c;
+        }
+        function render() {
+            try {
+                if (chart) { chart.destroy(); chart = null; }
+                chart = neoCharts('#chart', withTheme(config));
+            } catch (e) {
+                // never crash the page on a bad render
+                console.warn('Render failed:', e);
+            }
+            updateTypeToggle();
+        }
+
+        // Highlight the active chart-type button and label the panel with the current
+        // chart type (replaces the static "Preview" heading). No-op before build.
+        function updateTypeToggle() {
+            var btns = document.querySelectorAll('#typeToggle .type-btn');
+            for (var i = 0; i < btns.length; i++) {
+                var active = btns[i].getAttribute('data-type') === config.type;
+                btns[i].classList.toggle('is-active', active);
+                btns[i].setAttribute('aria-checked', active ? 'true' : 'false');
+            }
+            var heading = $('#preview-title');
+            if (heading) heading.textContent = typeLabel(config.type);
+        }
+
+        // ── Sync everything after a config mutation ──
+        // structural = controls and/or grid need rebuilding (type/series count change)
+        function sync(structural) {
+            render();
+            updateConfigView();
+            if (structural) { buildControls(); buildGrid(); }
+        }
+
+        // ── Config view (syntax-pretty JSON) ──
+        function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+        function prettyJson(obj) {
+            var json = JSON.stringify(obj, null, 2);
+            json = escHtml(json);
+            // strings (incl. keys), then numbers/booleans
+            json = json.replace(/("(\\.|[^"\\])*")(\s*:)?/g, function (m, str, _c, colon) {
+                if (colon) return '<span class="k">' + str + '</span>' + colon;
+                return '<span class="s">' + str + '</span>';
+            });
+            json = json.replace(/\b(true|false|null)\b/g, '<span class="b">$1</span>');
+            json = json.replace(/(:\s*)(-?\d+(?:\.\d+)?)/g, function (m, pre, num) { return pre + '<span class="n">' + num + '</span>'; });
+            json = json.replace(/(\[\s*)(-?\d[\d.,\s-]*?)(\s*\])/g, function (m, open, nums, close) {
+                var colored = nums.replace(/(-?\d+(?:\.\d+)?)/g, '<span class="n">$1</span>');
+                return open + colored + close;
+            });
+            return json;
+        }
+        function updateConfigView() {
+            $('#configView').innerHTML = prettyJson(config);
+        }
+
+        // ════════════════════════════════════════════════════════════
+        //  LOOK & FEEL CONTROLS
+        // ════════════════════════════════════════════════════════════
+        var GRADIENT_TYPES = ['column','bar','progress','waterfall','treemap','funnel','pie'];
+
+        function toggleCtrl(label, path, def) { return { kind: 'toggle', label: label, path: path, def: def }; }
+        function selectCtrl(label, path, options) { return { kind: 'select', label: label, path: path, options: options }; }
+        function rangeCtrl(label, path, min, max, step, def) { return { kind: 'range', label: label, path: path, min: min, max: max, step: step, def: def }; }
+        function textCtrl(label, path) { return { kind: 'text', label: label, path: path }; }
+        function numListCtrl(label, path) { return { kind: 'numlist', label: label, path: path }; }
+
+        // Per-type extra options
+        function typeOptions(t) {
+            var out = [];
+            if (t === 'column' || t === 'bar') {
+                out.push(toggleCtrl('Stacked', 'data.render.stacked', false));
+                out.push(rangeCtrl('Gap', 'gap', 0, 12, 1, 2));
+            }
+            if (t === 'waterfall' || t === 'treemap' || t === 'heatmap') {
+                out.push(rangeCtrl('Gap', 'gap', 0, 12, 1, 2));
+            }
+            if (t === 'column' || t === 'bar' || t === 'line' || t === 'area') {
+                out.push(rangeCtrl('Guide lines', 'layout.lines.number', 0, 8, 1, 4));
+                out.push(selectCtrl('Lines align', 'layout.lines.align', ['left','right']));
+            }
+            if (t === 'line' || t === 'area') {
+                out.push(toggleCtrl('Smooth curve', 'smooth', false));
+            }
+            if (t === 'gauge') {
+                out.push(rangeCtrl('Ring thickness', 'gauge.thickness', 4, 40, 1, 14));
+                out.push(rangeCtrl('Value font size', 'gauge.valueFontSize', 16, 72, 1, 48));
+            }
+            if (t === 'pie') {
+                out.push(rangeCtrl('Inner radius (0=pie, 60+=donut)', 'pie.innerRadius', 0, 90, 1, 0));
+                if (config.pie && config.pie.innerRadius > 0) out.push(rangeCtrl('Slice gap', 'gap', 0, 12, 1, 2));
+            }
+            if (t === 'funnel') {
+                out.push(selectCtrl('Shape', 'funnel.mode', ['funnel','trapezoid']));
+                out.push(selectCtrl('Direction', 'funnel.direction', ['vertical','horizontal']));
+                out.push(toggleCtrl('Flip (pyramid / reverse)', 'funnel.flip', false));
+            }
+            if (t === 'bullet') {
+                out.push(numListCtrl('Targets', 'bullet.targets'));
+                out.push(numListCtrl('Ranges', 'bullet.ranges'));
+            }
+            if (GRADIENT_TYPES.indexOf(t) !== -1) out.push(toggleCtrl('Gradient', 'gradient', true));
+            return out;
+        }
+
+        function buildControls() {
+            ensureTypeNamespaces();
+            var host = $('#controls');
+            host.innerHTML = '';
+
+            // — Group 1: Dimensions (chart type lives in the preview header) —
+            var g1 = group('Dimensions');
+            g1.appendChild(settingText('Width', 'layout.width'));
+            g1.appendChild(settingText('Height (or "auto")', 'layout.height'));
+            host.appendChild(g1);
+
+            // — Group 2: Title & labels —
+            var g2 = group('Title & labels');
+            g2.appendChild(settingText('Title', 'title.text'));
+            g2.appendChild(settingText('Subtitle', 'title.subtitle'));
+            g2.appendChild(settingSelect('Title align', 'title.align', ['left','center','right']));
+            host.appendChild(g2);
+
+            // — Group 3: Display flags —
+            var g3 = group('Display');
+            g3.appendChild(settingToggle('Legend', 'legend', true));
+            g3.appendChild(settingToggle('Animate', 'animate', true));
+            g3.appendChild(settingToggle('Highlight on hover', 'highlight', false));
+            g3.appendChild(settingToggle('Fit to container', 'fit', false));
+            host.appendChild(g3);
+
+            // — Group 4: per-type —
+            var opts = typeOptions(config.type);
+            if (opts.length) {
+                var g4 = group(config.type + ' options');
+                opts.forEach(function (c) { g4.appendChild(controlRow(c)); });
+                host.appendChild(g4);
+            }
+        }
+
+        function group(title) {
+            var g = el('div', 'group');
+            g.appendChild(el('div', 'group-title', title));
+            return g;
+        }
+
+        // Generic setting row helpers (used by the fixed groups)
+        function settingShell(labelText, pathHint, stack) {
+            var row = el('div', 'setting' + (stack ? ' stack' : ''));
+            var label = el('div', 'setting-label');
+            label.appendChild(document.createTextNode(labelText));
+            if (pathHint) { var code = el('code', null, pathHint); label.appendChild(code); }
+            row.appendChild(label);
+            var ctrl = el('div', 'setting-control');
+            row.appendChild(ctrl);
+            return { row: row, ctrl: ctrl };
+        }
+
+        function settingText(labelText, path) {
+            var s = settingShell(labelText, path, true);
+            var inp = el('input', 'txt full'); inp.type = 'text';
+            var v = getPath(config, path); inp.value = v == null ? '' : v;
+            inp.addEventListener('input', function () { setPath(config, path, inp.value); render(); updateConfigView(); });
+            s.ctrl.appendChild(inp);
+            return s.row;
+        }
+
+        function settingSelect(labelText, path, options, onChange) {
+            var s = settingShell(labelText, path);
+            var sel = el('select');
+            options.forEach(function (o) {
+                var opt = el('option', null, o); opt.value = o;
+                if (String(getPath(config, path)) === o) opt.selected = true;
+                sel.appendChild(opt);
+            });
+            sel.addEventListener('change', function () {
+                if (onChange) { onChange(sel.value); }
+                else { setPath(config, path, sel.value); render(); updateConfigView(); }
+            });
+            s.ctrl.appendChild(sel);
+            return s.row;
+        }
+
+        function settingToggle(labelText, path, def) {
+            var s = settingShell(labelText, path);
+            s.ctrl.appendChild(toggleEl(path, def, function (checked) { setPath(config, path, checked); render(); updateConfigView(); }));
+            return s.row;
+        }
+
+        function toggleEl(path, def, onChange) {
+            var wrap = el('label', 'sw');
+            var input = el('input'); input.type = 'checkbox';
+            var cur = getPath(config, path);
+            input.checked = cur === undefined ? !!def : !!cur;
+            var track = el('span', 'track');
+            input.addEventListener('change', function () { onChange(input.checked); });
+            wrap.appendChild(input); wrap.appendChild(track);
+            return wrap;
+        }
+
+        // Per-type control rows (toggle / select / range / text / numlist)
+        function controlRow(c) {
+            if (c.kind === 'toggle') return settingToggle(c.label, c.path, c.def);
+            if (c.kind === 'select') {
+                // Special boundary handling for funnel.mode etc handled generically (no rebuild needed)
+                return settingSelect(c.label, c.path, c.options, null);
+            }
+            if (c.kind === 'range') {
+                var s = settingShell(c.label, c.path);
+                var input = el('input'); input.type = 'range';
+                input.min = c.min; input.max = c.max; input.step = c.step;
+                var cur = getPath(config, c.path); if (cur == null) cur = c.def;
+                input.value = cur;
+                var out = el('span', 'range-val', String(cur));
+                input.addEventListener('input', function () {
+                    var val = parseFloat(input.value);
+                    out.textContent = input.value;
+                    var crossedDonut = (c.path === 'pie.innerRadius') && ((cur > 0) !== (val > 0));
+                    setPath(config, c.path, val);
+                    cur = val;
+                    render(); updateConfigView();
+                    if (crossedDonut) buildControls(); // show/hide slice-gap control
+                });
+                s.ctrl.appendChild(input); s.ctrl.appendChild(out);
+                return s.row;
+            }
+            if (c.kind === 'text') return settingText(c.label, c.path);
+            if (c.kind === 'numlist') {
+                var s2 = settingShell(c.label, c.path, true);
+                var inp = el('input', 'txt full'); inp.type = 'text';
+                var arr = getPath(config, c.path) || [];
+                inp.value = arr.join(', ');
+                inp.placeholder = 'e.g. 60, 80, 100';
+                inp.addEventListener('input', function () {
+                    var nums = inp.value.split(',').map(function (x) { return parseFloat(x.trim()); }).filter(function (n) { return !isNaN(n); });
+                    setPath(config, c.path, nums);
+                    render(); updateConfigView();
+                });
+                s2.ctrl.appendChild(inp);
+                return s2.row;
+            }
+            return el('div');
+        }
+
+        // ════════════════════════════════════════════════════════════
+        //  SERIES GRID
+        // ════════════════════════════════════════════════════════════
+        // Detect per-item color mode: a series uses per-item colors if its color
+        // array length matches its value count and is > 1.
+        function seriesPerItem(s) { return Array.isArray(s.color) && s.values && s.color.length === s.values.length && s.color.length > 1; }
+        // Global toggle reflects whether ANY series is per-item.
+        function anyPerItem() { return config.data.series.some(seriesPerItem); }
+
+        function buildGrid() {
+            var host = $('#seriesGrid');
+            host.innerHTML = '';
+            config.data.series.forEach(function (s, si) { host.appendChild(seriesBlock(s, si)); });
+
+            // color mode toggle
+            var cmw = $('#colorModeWrap');
+            cmw.innerHTML = '';
+            cmw.appendChild(document.createTextNode('Per-item colors'));
+            var t = toggleElLocal(anyPerItem(), function (checked) {
+                config.data.series.forEach(function (s) {
+                    if (checked) {
+                        var base = (Array.isArray(s.color) && s.color.length) ? s.color : [];
+                        s.color = (s.values || []).map(function (_, i) { return base[i] || base[0] || PALETTE[i % PALETTE.length]; });
+                    } else {
+                        // collapse to single color (first) or clear
+                        s.color = (Array.isArray(s.color) && s.color.length) ? [s.color[0]] : [];
+                    }
+                });
+                sync(false); buildGrid();
+            });
+            cmw.appendChild(t);
+
+            // palette actions
+            var pa = $('#paletteActions');
+            pa.innerHTML = '';
+            var reset = el('button', 'btn tiny', 'Reset palette');
+            reset.type = 'button';
+            reset.title = 'Clear colors so the built-in palette is used';
+            reset.addEventListener('click', function () {
+                config.data.series.forEach(function (s) { s.color = []; });
+                sync(false); buildGrid();
+            });
+            var apply = el('button', 'btn tiny', 'Apply default palette');
+            apply.type = 'button';
+            apply.title = 'Fill explicit colors from the 20-color palette';
+            apply.addEventListener('click', function () {
+                var k = 0;
+                config.data.series.forEach(function (s) {
+                    s.color = (s.values || []).map(function () { return PALETTE[(k++) % PALETTE.length]; });
+                });
+                sync(false); buildGrid();
+            });
+            pa.appendChild(reset); pa.appendChild(apply);
+        }
+
+        function toggleElLocal(checked, onChange) {
+            var wrap = el('label', 'sw');
+            var input = el('input'); input.type = 'checkbox'; input.checked = !!checked;
+            var track = el('span', 'track');
+            input.addEventListener('change', function () { onChange(input.checked); });
+            wrap.appendChild(input); wrap.appendChild(track);
+            return wrap;
+        }
+
+        function seriesBlock(s, si) {
+            var block = el('div', 'series-block');
+
+            // head
+            var head = el('div', 'series-head');
+            head.appendChild(el('span', 'series-idx', 'Series ' + (si + 1)));
+            var spacer = el('span', 'flex-spacer');
+            head.appendChild(spacer);
+            // single series color (only when NOT per-item)
+            if (!seriesPerItem(s)) {
+                var scWrap = el('span', 'cell-color');
+                var scLabel = el('span', 'swatch-label', 'Color');
+                scWrap.appendChild(scLabel);
+                var single = (Array.isArray(s.color) && s.color.length === 1) ? s.color[0] : '';
+                var cinput = el('input'); cinput.type = 'color'; cinput.value = normalizeHex(single) || PALETTE[si % PALETTE.length];
+                cinput.setAttribute('aria-label', 'Series ' + (si + 1) + ' color');
+                var hex = el('input', 'txt hex'); hex.type = 'text'; hex.placeholder = '(palette)'; hex.value = single;
+                hex.setAttribute('aria-label', 'Series ' + (si + 1) + ' color hex');
+                cinput.addEventListener('input', function () { s.color = [cinput.value]; hex.value = cinput.value; sync(false); });
+                hex.addEventListener('input', function () {
+                    var v = hex.value.trim();
+                    if (v === '') { s.color = []; } else { s.color = [v]; if (normalizeHex(v)) cinput.value = normalizeHex(v); }
+                    sync(false);
+                });
+                scWrap.appendChild(cinput); scWrap.appendChild(hex);
+                head.appendChild(scWrap);
+            }
+            var rm = el('button', 'btn tiny danger', 'Remove series'); rm.type = 'button';
+            rm.addEventListener('click', function () {
+                config.data.series.splice(si, 1);
+                if (!config.data.series.length) config.data.series.push({ title: 'Series', values: [0], labels: [''], decimals: 0 });
+                sync(false); buildGrid();
+            });
+            head.appendChild(rm);
+            block.appendChild(head);
+
+            // meta fields
+            var meta = el('div', 'series-meta');
+            meta.appendChild(metaField('Title', 'text', s.title || '', function (v) { s.title = v; sync(false); }, 'grow'));
+            meta.appendChild(metaField('Prefix', 'text', s.prefix || '', function (v) { s.prefix = v; sync(false); }, 'tiny'));
+            meta.appendChild(metaField('Suffix', 'text', s.suffix || '', function (v) { s.suffix = v; sync(false); }, 'tiny'));
+            meta.appendChild(metaField('Decimals', 'number', (s.decimals != null ? s.decimals : 3), function (v) { var n = parseInt(v, 10); s.decimals = isNaN(n) ? 0 : n; sync(false); }, 'tiny'));
+            block.appendChild(meta);
+
+            // value table
+            var table = el('table', 'grid');
+            var thead = el('thead'); var htr = el('tr');
+            ['Label','Value'].forEach(function (h) { htr.appendChild(el('th', null, h)); });
+            if (seriesPerItem(s)) htr.appendChild(el('th', null, 'Color'));
+            htr.appendChild(el('th', null, ''));
+            thead.appendChild(htr); table.appendChild(thead);
+
+            var tbody = el('tbody');
+            var n = Math.max(s.values ? s.values.length : 0, s.labels ? s.labels.length : 0);
+            for (var i = 0; i < n; i++) tbody.appendChild(valueRow(s, i, si));
+            table.appendChild(tbody);
+            block.appendChild(table);
+
+            // footer: add row
+            var foot = el('div', 'series-foot');
+            var addRow = el('button', 'btn tiny', '+ Add row'); addRow.type = 'button';
+            addRow.addEventListener('click', function () {
+                if (!s.values) s.values = []; if (!s.labels) s.labels = [];
+                s.values.push(0); s.labels.push('Item ' + (s.values.length));
+                if (seriesPerItem(s) && Array.isArray(s.color)) s.color.push(PALETTE[(s.color.length) % PALETTE.length]);
+                sync(false); buildGrid();
+            });
+            foot.appendChild(addRow);
+            block.appendChild(foot);
+
+            return block;
+        }
+
+        function metaField(labelText, type, value, onInput, cls) {
+            var f = el('div', 'field ' + (cls || ''));
+            var id = 'f-' + Math.random().toString(36).slice(2, 7);
+            var lab = el('label', null, labelText); lab.setAttribute('for', id);
+            var inp = el('input', 'txt'); inp.type = type; inp.id = id; inp.value = value;
+            if (type === 'number') { inp.min = 0; inp.step = 1; }
+            inp.addEventListener('input', function () { onInput(inp.value); });
+            f.appendChild(lab); f.appendChild(inp);
+            return f;
+        }
+
+        function valueRow(s, i, si) {
+            var tr = el('tr');
+            // label
+            var tdL = el('td');
+            var inL = el('input', 'txt'); inL.type = 'text'; inL.value = (s.labels && s.labels[i] != null) ? s.labels[i] : '';
+            inL.setAttribute('aria-label', 'Label ' + (i + 1));
+            inL.addEventListener('input', function () { if (!s.labels) s.labels = []; s.labels[i] = inL.value; sync(false); });
+            tdL.appendChild(inL); tr.appendChild(tdL);
+            // value
+            var tdV = el('td');
+            var inV = el('input', 'txt'); inV.type = 'number'; inV.step = 'any'; inV.value = (s.values && s.values[i] != null) ? s.values[i] : '';
+            inV.setAttribute('aria-label', 'Value ' + (i + 1));
+            inV.addEventListener('input', function () { if (!s.values) s.values = []; var num = parseFloat(inV.value); s.values[i] = isNaN(num) ? 0 : num; sync(false); });
+            tdV.appendChild(inV); tr.appendChild(tdV);
+            // per-item color
+            if (seriesPerItem(s)) {
+                var tdC = el('td', 'swatch-cell');
+                var wrap = el('div', 'cell-color');
+                var c = (s.color && s.color[i]) ? s.color[i] : PALETTE[i % PALETTE.length];
+                var ci = el('input'); ci.type = 'color'; ci.value = normalizeHex(c) || PALETTE[i % PALETTE.length];
+                ci.setAttribute('aria-label', 'Color ' + (i + 1));
+                var hex = el('input', 'txt hex'); hex.type = 'text'; hex.value = c;
+                hex.setAttribute('aria-label', 'Color hex ' + (i + 1));
+                ci.addEventListener('input', function () { s.color[i] = ci.value; hex.value = ci.value; sync(false); });
+                hex.addEventListener('input', function () { var v = hex.value.trim(); s.color[i] = v; if (normalizeHex(v)) ci.value = normalizeHex(v); sync(false); });
+                wrap.appendChild(ci); wrap.appendChild(hex);
+                tdC.appendChild(wrap); tr.appendChild(tdC);
+            }
+            // remove row
+            var tdA = el('td', 'act-cell');
+            var rm = el('button', 'btn tiny danger icon-btn', '×'); rm.type = 'button';
+            rm.setAttribute('aria-label', 'Remove row ' + (i + 1));
+            rm.addEventListener('click', function () {
+                if (s.values) s.values.splice(i, 1);
+                if (s.labels) s.labels.splice(i, 1);
+                if (Array.isArray(s.color) && s.color.length > 1) s.color.splice(i, 1);
+                if (Array.isArray(s.outputValues)) s.outputValues.splice(i, 1);
+                sync(false); buildGrid();
+            });
+            tdA.appendChild(rm); tr.appendChild(tdA);
+            return tr;
+        }
+
+        function normalizeHex(v) {
+            if (!v) return null;
+            v = String(v).trim();
+            if (/^#([0-9a-f]{3})$/i.test(v)) { return '#' + v[1] + v[1] + v[2] + v[2] + v[3] + v[3]; }
+            if (/^#([0-9a-f]{6})$/i.test(v)) return v.toLowerCase();
+            return null;
+        }
+
+        // ════════════════════════════════════════════════════════════
+        //  RAW PASTE (JSON + CSV/TSV)
+        // ════════════════════════════════════════════════════════════
+        function setRawStatus(msg, kind) {
+            var s = $('#rawStatus');
+            s.textContent = msg;
+            s.className = 'status' + (kind ? ' ' + kind : '');
+        }
+
+        function coerceSeries(arr) {
+            // ensure each entry is a sane series object
+            return arr.map(function (s, i) {
+                var out = {};
+                out.title = (s.title != null) ? String(s.title) : ('Series ' + (i + 1));
+                out.values = Array.isArray(s.values) ? s.values.map(function (v) { var n = parseFloat(v); return isNaN(n) ? 0 : n; }) : [];
+                if (Array.isArray(s.labels)) out.labels = s.labels.map(String);
+                else out.labels = out.values.map(function (_, j) { return 'Item ' + (j + 1); });
+                if (Array.isArray(s.color)) out.color = s.color;
+                if (Array.isArray(s.outputValues)) out.outputValues = s.outputValues.map(String);
+                if (s.prefix != null) out.prefix = String(s.prefix);
+                if (s.suffix != null) out.suffix = String(s.suffix);
+                out.decimals = (s.decimals != null && !isNaN(parseInt(s.decimals, 10))) ? parseInt(s.decimals, 10) : 0;
+                return out;
+            });
+        }
+
+        function parseRaw(text) {
+            var trimmed = text.trim();
+            if (!trimmed) throw new Error('Nothing to parse');
+
+            // Try JSON first when it looks like JSON
+            if (trimmed[0] === '[' || trimmed[0] === '{') {
+                var data = JSON.parse(trimmed); // may throw
+                var series;
+                if (Array.isArray(data)) series = data;
+                else if (data && Array.isArray(data.series)) series = data.series; // a {series:[...]} or data wrapper
+                else if (data && data.data && Array.isArray(data.data.series)) series = data.data.series;
+                else if (data && typeof data === 'object') series = [data]; // single series object
+                else throw new Error('Unrecognized JSON shape');
+                if (!Array.isArray(series) || !series.length) throw new Error('No series found in JSON');
+                return { series: coerceSeries(series), rows: (series[0].values || []).length, count: series.length, fmt: 'JSON' };
+            }
+
+            // Otherwise treat as CSV / TSV
+            return parseDelimited(trimmed);
+        }
+
+        function parseDelimited(text) {
+            var lines = text.split(/\r?\n/).map(function (l) { return l.replace(/\s+$/,''); }).filter(function (l) { return l.trim() !== ''; });
+            if (!lines.length) throw new Error('No rows');
+            // detect delimiter: tab if any line has a tab, else comma, else semicolon
+            var delim = /\t/.test(lines[0]) ? '\t' : (/;/.test(lines[0]) && !/,/.test(lines[0]) ? ';' : ',');
+            var rowsCells = lines.map(function (l) { return l.split(delim).map(function (c) { return c.trim(); }); });
+
+            // header detection: first row has non-numeric in value columns (cols 1..)
+            var first = rowsCells[0];
+            var headerLikely = first.slice(1).some(function (c) { return c !== '' && isNaN(parseFloat(c)); });
+            var headers = null;
+            if (headerLikely) { headers = first; rowsCells = rowsCells.slice(1); }
+            if (!rowsCells.length) throw new Error('No data rows after header');
+
+            var numCols = rowsCells.reduce(function (m, r) { return Math.max(m, r.length); }, 0);
+            var seriesCount = Math.max(1, numCols - 1);
+            var labels = rowsCells.map(function (r) { return r[0]; });
+            var series = [];
+            for (var c = 1; c <= seriesCount; c++) {
+                var vals = rowsCells.map(function (r) { var n = parseFloat(r[c]); return isNaN(n) ? 0 : n; });
+                series.push({
+                    title: (headers && headers[c]) ? headers[c] : ('Series ' + c),
+                    values: vals,
+                    labels: labels.slice(),
+                    decimals: 0
+                });
+            }
+            return { series: coerceSeries(series), rows: rowsCells.length, count: series.length, fmt: delim === '\t' ? 'TSV' : 'CSV' };
+        }
+
+        function applyRaw() {
+            var text = $('#rawArea').value;
+            try {
+                var result = parseRaw(text);
+                config.data.series = result.series;
+                $('#rawArea').classList.remove('invalid');
+                setRawStatus('✓ parsed ' + result.fmt + ' — ' + result.rows + ' rows / ' + result.count + ' series', 'ok');
+                sync(true);
+            } catch (e) {
+                $('#rawArea').classList.add('invalid');
+                setRawStatus('✕ ' + e.message, 'err');
+            }
+        }
+
+        function loadRawFromConfig() {
+            $('#rawArea').value = JSON.stringify(config.data.series, null, 2);
+            $('#rawArea').classList.remove('invalid');
+            setRawStatus('Loaded current series as JSON — edit & Apply.', 'ok');
+        }
+
+        // ════════════════════════════════════════════════════════════
+        //  CONFIG COPY
+        // ════════════════════════════════════════════════════════════
+        function copyToClipboard(text, btn, okLabel) {
+            var original = btn.textContent;
+            function done() { btn.textContent = okLabel || 'Copied!'; setTimeout(function () { btn.textContent = original; }, 1200); }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(done, function () { fallbackCopy(text); done(); });
+            } else { fallbackCopy(text); done(); }
+        }
+        function fallbackCopy(text) {
+            var ta = document.createElement('textarea');
+            ta.value = text; ta.className = 'offscreen';
+            document.body.appendChild(ta); ta.select();
+            try { document.execCommand('copy'); } catch (e) { /* ignore */ }
+            document.body.removeChild(ta);
+        }
+
+        // ════════════════════════════════════════════════════════════
+        //  WIRING
+        // ════════════════════════════════════════════════════════════
+        function setTab(name) {
+            activeTab = name;
+            document.querySelectorAll('.tab').forEach(function (t) {
+                var on = t.getAttribute('data-tab') === name;
+                t.classList.toggle('is-active', on);
+                t.setAttribute('aria-selected', on ? 'true' : 'false');
+            });
+            $('#pane-grid').classList.toggle('is-active', name === 'grid');
+            $('#pane-raw').classList.toggle('is-active', name === 'raw');
+            if (name === 'raw' && !$('#rawArea').value.trim()) loadRawFromConfig();
+        }
+
+        function wire() {
+            // Chart type lives in the preview header as a segmented icon toggle. Build the
+            // buttons once; render() keeps the active one in sync. Clicking one drives the
+            // same structural switch the rest of the controls use.
+            var typeWrap = $('#typeToggle');
+            ALL_TYPES.forEach(function (t) {
+                var btn = el('button', 'type-btn');
+                btn.type = 'button';
+                btn.setAttribute('data-type', t);
+                btn.setAttribute('role', 'radio');
+                btn.setAttribute('aria-checked', 'false');
+                btn.title = typeLabel(t);
+                btn.setAttribute('aria-label', typeLabel(t));
+                btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' + TYPE_ICONS[t] + '</svg>';
+                btn.addEventListener('click', function () {
+                    if (config.type === t) return;
+                    switchType(t);
+                    sync(true);
+                });
+                typeWrap.appendChild(btn);
+            });
+
+            $('#themeToggle').addEventListener('click', function () {
+                config.theme = config.theme === 'dark' ? 'light' : 'dark';
+                document.body.classList.toggle('light', config.theme === 'light');
+                render(); updateConfigView();
+            });
+            document.querySelectorAll('.tab').forEach(function (t) {
+                t.addEventListener('click', function () { setTab(t.getAttribute('data-tab')); });
+            });
+            $('#addSeries').addEventListener('click', function () {
+                var proto = config.data.series[0] || {};
+                config.data.series.push({
+                    title: 'Series ' + (config.data.series.length + 1),
+                    values: (proto.values || [0,0,0]).map(function () { return 0; }),
+                    labels: (proto.labels || ['A','B','C']).slice(),
+                    decimals: proto.decimals != null ? proto.decimals : 0
+                });
+                sync(false); buildGrid();
+            });
+            $('#rawApply').addEventListener('click', applyRaw);
+            $('#rawFromConfig').addEventListener('click', loadRawFromConfig);
+            $('#copyJson').addEventListener('click', function () {
+                copyToClipboard(JSON.stringify(config, null, 2), this, 'Copied JSON!');
+            });
+            $('#copySnippet').addEventListener('click', function () {
+                var snippet = "neoCharts('#chart', " + JSON.stringify(config, null, 2) + ');';
+                copyToClipboard(snippet, this, 'Copied snippet!');
+            });
+        }
+
+        // ── Boot ──
+        function init() {
+            document.body.classList.toggle('light', config.theme === 'light');
+            buildControls();
+            buildGrid();
+            wire();
+            render();
+            updateConfigView();
+        }
+
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+        else init();
+
+        // expose for headless verification
+        window.__editor = {
+            getConfig: function () { return config; },
+            setType: function (t) { switchType(t); sync(true); },
+            applyRaw: function (text) { $('#rawArea').value = text; applyRaw(); },
+            render: render
+        };
+    })();
+    </script>
+</body>
+</html>

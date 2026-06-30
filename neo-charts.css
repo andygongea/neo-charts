@@ -71,7 +71,8 @@
 /* Bar / Waterfall / Bullet — shared horizontal layout */
 .nc-bar .nc-chart-body, .nc-waterfall .nc-chart-body, .nc-bullet .nc-chart-body { display:grid; grid-template-columns:auto 1fr; grid-template-rows:1fr auto; gap:16px; }
 .nc-bar .nc-yaxis, .nc-waterfall .nc-yaxis, .nc-bullet .nc-yaxis { grid-column:1; grid-row:1; display:flex; flex-direction:column; justify-content:stretch; min-width:0; max-width:150px; }
-.nc-bar .nc-yaxis .nc-label-item, .nc-waterfall .nc-yaxis .nc-label-item, .nc-bullet .nc-yaxis .nc-label-item { flex:1; display:block; font-size:12px; color:var(--nc-text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:right; min-height:0; cursor:pointer; line-height:1; }
+.nc-bar .nc-yaxis .nc-label-item, .nc-waterfall .nc-yaxis .nc-label-item, .nc-bullet .nc-yaxis .nc-label-item { flex:1; display:flex; align-items:center; justify-content:flex-end; font-size:12px; color:var(--nc-text-muted); min-height:0; cursor:pointer; line-height:1; }
+.nc-bar .nc-yaxis .nc-label-text, .nc-waterfall .nc-yaxis .nc-label-text, .nc-bullet .nc-yaxis .nc-label-text { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:right; max-width:100%; }
 .nc-bar .nc-plot, .nc-waterfall .nc-plot, .nc-bullet .nc-plot { grid-column:2; grid-row:1; position:relative; min-height:0; min-width:0; overflow:visible; }
 .nc-bar .nc-tooltip, .nc-waterfall .nc-tooltip, .nc-bullet-row .nc-tooltip { left:auto; right:0; transform:none; bottom:100%; margin-bottom:4px; }
 .nc-bar .nc-tooltip .nc-tooltip-arrow, .nc-waterfall .nc-tooltip .nc-tooltip-arrow, .nc-bullet-row .nc-tooltip .nc-tooltip-arrow { left:auto; right:16px; }

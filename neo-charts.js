@@ -1244,12 +1244,12 @@
             if (isGrouped) {
                 for (var yi = 0; yi < len; yi++) {
                     yHtml += '<div class="nc-label-group">';
-                    yHtml += '<span class="nc-label-item">' + escapeHtml(series[0].labels[yi]) + '</span>';
+                    yHtml += '<span class="nc-label-item"><span class="nc-label-text">' + escapeHtml(series[0].labels[yi]) + '</span></span>';
                     yHtml += '</div>';
                 }
             } else {
                 for (var yi = 0; yi < len; yi++) {
-                    yHtml += '<span class="nc-label-item">' + escapeHtml(series[0].labels[yi]) + '</span>';
+                    yHtml += '<span class="nc-label-item"><span class="nc-label-text">' + escapeHtml(series[0].labels[yi]) + '</span></span>';
                 }
             }
             yHtml += '</div>';
