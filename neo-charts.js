@@ -15,6 +15,7 @@
     var SMOOTH_STEPS = 8;
     var HEADROOM_FACTOR = 1.10;
     var ANIMATION_STAGGER = 0.05;
+    var ANIMATION_STAGGER_MAX = 1.2;
     var GAUGE_ANIM_DURATION = 1000;
     var GAUGE_GAP_DEG = 30;
 
@@ -41,8 +42,7 @@
             width: '100%',
             height: '300px',
             lines: {
-                number: 4,
-                align: 'right'
+                number: 4
             }
         },
         gap: 2,
@@ -81,12 +81,20 @@
         }
     };
 
+    // Clone arrays and plain objects so merged configs never share references with the
+    // module-level defaults (mutating config.pie/config.funnel/etc. must not leak globally).
+    function cloneValue(value) {
+        if (Array.isArray(value)) return value.slice();
+        if (value && typeof value === 'object') return deepMerge(value, {});
+        return value;
+    }
+
     function deepMerge(target, source) {
         var result = {};
         var key;
         for (key in target) {
             if (target.hasOwnProperty(key)) {
-                result[key] = target[key];
+                result[key] = cloneValue(target[key]);
             }
         }
         for (key in source) {
@@ -116,10 +124,18 @@
         return n.toFixed(3);
     }
 
-    var _escDiv = document.createElement('div');
+    // Single-pass string escaper: no DOM round-trip (works in Node/SSR), one allocation, and it
+    // escapes quotes too since escaped output is interpolated into attribute values.
+    var _escMap = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
     function escapeHtml(str) {
-        _escDiv.textContent = str;
-        return _escDiv.innerHTML;
+        return String(str).replace(/[&<>"']/g, function (m) { return _escMap[m]; });
+    }
+
+    // Coerce a value expected to be numeric before it is interpolated into an inline style,
+    // so a stray string can't break out of the attribute. Falls back to `fallback` on NaN.
+    function num(v, fallback) {
+        var n = parseFloat(v);
+        return isFinite(n) ? n : fallback;
     }
 
     function sanitizeClass(cls) {
@@ -193,10 +209,14 @@
     }
 
     function neoCharts(element, options) {
+        var _selector = typeof element === 'string' ? element : null;
         if (typeof element === 'string') {
             element = document.querySelector(element);
         }
-        if (!element) return;
+        if (!element) {
+            console.warn('neo-charts: no element matches selector "' + _selector + '".');
+            return;
+        }
 
         var config = deepMerge(defaults, options || {});
         config.data.series = normalizeSeries(config.data.series);
@@ -227,18 +247,47 @@
         var pieSheen = useGradient ? PIE_SHEEN : '';
         var validTypes = ['column', 'bar', 'line', 'area', 'progress', 'waterfall', 'gauge', 'heatmap', 'treemap', 'pie', 'bullet', 'funnel', 'trapezoid'];
 
-        // Warn on common misconfigurations
+        // Warn on common misconfigurations. Reassign to 'bar' so classing, guidelines, sizing and
+        // every downstream type check take the real bar path (not just the render switch default).
         if (validTypes.indexOf(type) === -1) {
             console.warn('neo-charts: unknown chart type "' + type + '". Falling back to bar.');
+            type = 'bar';
+            config.type = 'bar';
         }
         series.forEach(function (serie, idx) {
             if (serie.values.length && serie.labels.length && serie.values.length !== serie.labels.length) {
                 console.warn('neo-charts: series[' + idx + '] has ' + serie.values.length + ' values but ' + serie.labels.length + ' labels. They should match.');
             }
         });
+        for (var msi = 1; msi < series.length; msi++) {
+            if (series[msi].values.length !== series[0].values.length) {
+                console.warn('neo-charts: series[' + msi + '] has ' + series[msi].values.length + ' values but series[0] has ' + series[0].values.length + '. Extra values are ignored; missing values render as 0.');
+                break;
+            }
+        }
 
-        // pie/funnel/treemap are proportional and assume non-negative values
-        var nonNegativeTypes = ['pie', 'funnel', 'treemap'];
+        // Waterfall renders a single running total; the axis scale is derived from series[0],
+        // so extra series would render against a mismatched scale. Ignore them explicitly.
+        if (type === 'waterfall' && series.length > 1) {
+            console.warn('neo-charts: waterfall charts support a single series; extra series are ignored.');
+            series = series.slice(0, 1);
+            config.data.series = series;
+        }
+
+        // Auto-generate placeholder labels ("1", "2", ...) when a series has values but no labels,
+        // so a labels-omitted config renders instead of silently showing the empty state. Gauge is
+        // exempt below (it never displays labels); this covers the common column/bar/line omission.
+        if (type !== 'gauge') {
+            series.forEach(function (serie) {
+                if (serie.values.length && !serie.labels.length) {
+                    serie.labels = serie.values.map(function (_, li) { return String(li + 1); });
+                }
+            });
+        }
+
+        // These types are proportional or cumulative and treat negative values as 0.
+        var nonNegativeTypes = ['pie', 'funnel', 'treemap', 'progress'];
+        if (render.stacked) nonNegativeTypes = nonNegativeTypes.concat(['column', 'bar']);
         if (nonNegativeTypes.indexOf(type) !== -1) {
             series.forEach(function (serie, idx) {
                 for (var ni = 0; ni < serie.values.length; ni++) {
@@ -295,12 +344,18 @@
             }
         }
 
+        // Stacked scale must exist before guidelines/axis labels are rendered (they read
+        // maxStacked and their output is cached), not lazily inside the renderers.
+        if (render.stacked) {
+            maxStacked = getMaxSum();
+        }
+
         function getMaxSum() {
             var sums = [];
             var result = 0;
             for (var i = 0; i < series.length; i++) {
                 for (var j = 0; j < series[i].values.length; j++) {
-                    sums[j] = (sums[j] || 0) + series[i].values[j];
+                    sums[j] = (sums[j] || 0) + (series[i].values[j] || 0);
                     if (result < sums[j]) result = sums[j];
                 }
             }
@@ -324,20 +379,53 @@
             return sum;
         }
 
+        // Highest point the running cumulative total reaches (never below 0) — the waterfall scale.
+        function runningPeak(arr) {
+            var running = 0, peak = 0;
+            for (var i = 0; i < arr.length; i++) {
+                running += (arr[i] || 0);
+                if (running > peak) peak = running;
+            }
+            return peak;
+        }
+
         function effectiveRange() {
             return minValue < 0 ? valueRange : maxValue;
         }
 
+        // Cap the total entry stagger so large datasets still finish animating in ~1.2s instead of
+        // trailing for many seconds (i*0.05s uncapped means a 200-point chart takes 10s to settle).
         function delay(i) {
-            return 'animation-delay:' + (i * ANIMATION_STAGGER).toFixed(2) + 's;';
+            var d = Math.min(i * ANIMATION_STAGGER, ANIMATION_STAGGER_MAX);
+            return 'animation-delay:' + d.toFixed(2) + 's;';
         }
 
+        // Every interactive data element carries these. tabindex makes it keyboard-reachable so
+        // :focus-visible can reveal its tooltip (CSS mirrors every :hover rule); role/aria-label
+        // give it a name and, when onClick is wired, button semantics for Enter/Space activation.
+        var _interactive = config.onClick || config.onHover || config.highlight;
         function dataAttr(serieIdx, itemIdx) {
-            return ' data-nc-series="' + serieIdx + '" data-nc-index="' + itemIdx + '"';
+            var attr = ' data-nc-series="' + serieIdx + '" data-nc-index="' + itemIdx + '"';
+            if (_interactive && type !== 'gauge') {
+                var serie = series[serieIdx];
+                var lbl = (serie && serie.labels[itemIdx] != null) ? serie.labels[itemIdx] : String(itemIdx + 1);
+                var v = serie ? formatValue(serie, itemIdx) : '';
+                attr += ' tabindex="0" role="' + (config.onClick ? 'button' : 'img') + '"'
+                    + ' aria-label="' + escapeHtml(String(lbl) + ': ' + String(v).replace(/<[^>]*>/g, '')) + '"';
+            }
+            return attr;
+        }
+
+        // Column/bar renderers cycle the default palette by item index, which makes every series in a
+        // grouped/stacked chart share a color (and contradicts the legend, which colors by series).
+        // When there are multiple series and this one has no explicit color, key the default palette
+        // by SERIES index instead — matching line/area and the legend. Single-series keeps per-item.
+        function colorIndex(serie, serieIdx, itemIdx) {
+            return (series.length > 1 && serie.color.length === 0) ? serieIdx : itemIdx;
         }
 
         function renderEmpty() {
-            return '<h2 class="nc-empty">' + escapeHtml(render.empty) + '</h2>';
+            return '<p class="nc-empty" role="status">' + escapeHtml(render.empty) + '</p>';
         }
 
         function guidelineData(number) {
@@ -345,10 +433,12 @@
             var hasNeg = minValue < 0;
             var waterfallScale = 0;
             if (type === 'waterfall' && series.length > 0) {
-                waterfallScale = niceMax(arraySum(series[0].values));
+                waterfallScale = niceMax(runningPeak(series[0].values));
             }
             var scaleMax = type === 'waterfall' ? waterfallScale : (render.stacked ? maxStacked : maxValue);
-            var scaleMin = hasNeg ? minValue : 0;
+            // Waterfall's axis tracks the cumulative running total, which is 0-based even when
+            // individual deltas are negative — so it must not use the per-delta minValue.
+            var scaleMin = (hasNeg && type !== 'waterfall') ? minValue : 0;
             var scaleRange = type === 'waterfall' ? waterfallScale : (render.stacked ? maxStacked : (hasNeg ? valueRange : maxValue));
             var pre = series.length > 0 ? escapeHtml(series[0].prefix || '') : '';
             var suf = series.length > 0 ? escapeHtml(series[0].suffix || '') : '';
@@ -365,9 +455,7 @@
                 }
 
                 if (scaleRange > 0) {
-                    var abbreviated = abbreviate(raw);
-                    var usedAbbr = abbreviated !== Math.round(raw).toLocaleString() && abbreviated !== (+raw.toFixed(3)).toString();
-                    label = pre + abbreviated + (usedAbbr ? '' : suf);
+                    label = pre + abbreviate(raw) + suf;
                 } else {
                     label = toFixed3(isHorizontal ? (100 - frac * 100) : (frac * 100)) + '%';
                 }
@@ -384,7 +472,10 @@
             return _guideCache[number];
         }
 
-        function renderGuidelines(number, align) {
+        // Guideline lines only. Axis-value labels are rendered separately by renderAxisLabels into
+        // .nc-yaxis/.nc-xaxis (the previous per-guideline label + its align option were unreachable
+        // for every valid chart type, so both were removed).
+        function renderGuidelines(number) {
             if (!number) return '';
             var data = getCachedGuidelineData(number);
             var html = '<div class="nc-guidelines">';
@@ -395,11 +486,7 @@
                     : 'left:' + toFixed3(d.frac * 100) + '%;top:0;bottom:0;';
                 var lineType = data.isHorizontal ? 'is-horizontal' : 'is-vertical';
                 var edgeClass = d.isFirst ? ' is-first' : (d.isLast ? ' is-last' : '');
-                html += '<div class="nc-guideline ' + lineType + edgeClass + '" style="' + pos + '">';
-                if (align) {
-                    html += '<span class="nc-label is-' + align + '-aligned">' + d.label + '</span>';
-                }
-                html += '</div>';
+                html += '<div class="nc-guideline ' + lineType + edgeClass + '" style="' + pos + '"></div>';
             }
             html += '</div>';
             return html;
@@ -416,11 +503,16 @@
             return html;
         }
 
+        // True only when this index has an explicit display string; a short outputValues array
+        // falls back to numeric formatting for the trailing items instead of rendering "undefined".
+        function hasOutputAt(serie, i) {
+            return serie.outputValues[i] !== undefined && serie.outputValues[i] !== null;
+        }
+
         function formatValue(serie, i) {
-            var hasOutput = serie.outputValues.length > 0;
-            return hasOutput
+            return hasOutputAt(serie, i)
                 ? escapeHtml(String(serie.outputValues[i]))
-                : (escapeHtml(serie.prefix || '') + serie.values[i].toFixed(serie.decimals) + escapeHtml(serie.suffix || ''));
+                : (escapeHtml(serie.prefix || '') + (serie.values[i] || 0).toFixed(serie.decimals) + escapeHtml(serie.suffix || ''));
         }
 
         function tooltipRow(color, label, val) {
@@ -434,7 +526,7 @@
         function renderTooltip(serieIdx, i) {
             var serie = series[serieIdx];
             return '<div class="nc-tooltip">'
-                + '<div class="nc-tooltip-header">' + escapeHtml(serie.labels[i]) + '</div>'
+                + '<div class="nc-tooltip-header">' + escapeHtml(serie.labels[i] || '') + '</div>'
                 + tooltipRow(getColorValue(serie.color, i), escapeHtml(serie.title), formatValue(serie, i))
                 + '<div class="nc-tooltip-arrow"></div>'
                 + '</div>';
@@ -442,27 +534,42 @@
 
         function renderItemContent(serieIdx, i, opts) {
             var serie = series[serieIdx];
-            var hasOutput = serie.outputValues.length > 0;
-            var val = hasOutput ? escapeHtml(String(serie.outputValues[i])) : serie.values[i];
-            var pre = hasOutput ? '' : escapeHtml(serie.prefix || '');
-            var suf = hasOutput ? '' : escapeHtml(serie.suffix || '');
+            var hasOutput = hasOutputAt(serie, i);
+            // Build the escaped value string exactly once (the previous code escaped outputValues
+            // at declaration AND again at interpolation, mangling apostrophes/quotes on the label).
+            var val = hasOutput
+                ? escapeHtml(String(serie.outputValues[i]))
+                : (escapeHtml(serie.prefix || '') + escapeHtml(String(serie.values[i] || 0)) + escapeHtml(serie.suffix || ''));
             var hideLabel = opts && opts.hideLabel;
             var hideValue = opts && opts.hideValue;
 
             return '<span class="nc-main">'
-                + (hideLabel ? '' : '<span class="nc-label">' + escapeHtml(serie.labels[i]) + '</span>')
-                + (hideValue ? '' : '<span class="nc-value">' + pre + escapeHtml(String(val)) + suf + '</span>')
+                + (hideLabel ? '' : '<span class="nc-label">' + escapeHtml(serie.labels[i] || '') + '</span>')
+                + (hideValue ? '' : '<span class="nc-value">' + val + '</span>')
                 + '</span>';
         }
 
         function renderThreshold(isHorizontalBar) {
             var html = '';
+            // Position numeric thresholds on the SAME scale the axis/guidelines use, so a value
+            // lands where its axis label predicts. guidelineData models this: stacked -> maxStacked,
+            // waterfall -> cumulative sum, negative-min -> (value - min) / valueRange.
+            var hasNeg = minValue < 0;
+            var scaleMin = hasNeg ? minValue : 0;
+            var scaleRange;
+            if (type === 'waterfall' && series.length > 0) {
+                scaleRange = niceMax(runningPeak(series[0].values));
+            } else if (render.stacked) {
+                scaleRange = maxStacked;
+            } else {
+                scaleRange = hasNeg ? valueRange : maxValue;
+            }
             render.threshold.forEach(function (threshold) {
                 var val;
                 if (typeof threshold === 'string') {
                     val = parseFloat(threshold); // already a percentage
                 } else {
-                    val = maxValue > 0 ? parseFloat(toFixed3(threshold * 100 / maxValue)) : 0;
+                    val = scaleRange > 0 ? parseFloat(toFixed3((threshold - scaleMin) * 100 / scaleRange)) : 0;
                 }
                 if (isNaN(val)) return;
                 if (isHorizontalBar) {
@@ -491,9 +598,9 @@
             for (var i = 0; i < len; i++) {
                 if (isGrouped) html += '<div class="nc-group">';
                 for (var idx = 0; idx < count; idx++) {
-                    var val = series[idx].values[i];
+                    var val = series[idx].values[i] || 0;
                     var h = range > 0 ? toFixed3(Math.abs(val) / range * 100) : 0;
-                    var style = 'height:' + h + '%;' + getColor(series[idx].color, i, null, useGradient) + delay(i);
+                    var style = 'height:' + h + '%;' + getColor(series[idx].color, colorIndex(series[idx], idx, i), null, useGradient) + delay(i);
                     if (hasNeg) {
                         if (val >= 0) {
                             style += 'bottom:' + toFixed3((-minValue) / range * 100) + '%;';
@@ -515,24 +622,24 @@
 
         function renderStackedColumn() {
             var html = '';
-            maxStacked = getMaxSum();
             var len = series[0].values.length;
 
             for (var i = 0; i < len; i++) {
                 var items = '';
 
                 // Build the combined tooltip body once per category (header + a row per series)
-                var tipBody = '<div class="nc-tooltip-header">' + escapeHtml(series[0].labels[i]) + '</div>';
+                var tipBody = '<div class="nc-tooltip-header">' + escapeHtml(series[0].labels[i] || '') + '</div>';
                 for (var s = 0; s < series.length; s++) {
-                    tipBody += tooltipRow(getColorValue(series[s].color, i), escapeHtml(series[s].title), formatValue(series[s], i));
+                    tipBody += tooltipRow(getColorValue(series[s].color, colorIndex(series[s], s, i)), escapeHtml(series[s].title), formatValue(series[s], i));
                 }
 
                 for (var s = 0; s < series.length; s++) {
                     var serie = series[s];
-                    var h = serie.values[i] * 100 / maxStacked;
+                    // Clamp: a negative value would emit height:-25% which browsers drop, corrupting the stack.
+                    var h = maxStacked > 0 ? Math.max(0, (serie.values[i] || 0)) * 100 / maxStacked : 0;
 
                     // Each segment carries the combined tooltip so it anchors to the hovered section
-                    items += '<div class="nc-item"' + dataAttr(s, i) + ' style="height:' + toFixed3(h) + '%;' + getColor(serie.color, i, null, useGradient) + '">';
+                    items += '<div class="nc-item"' + dataAttr(s, i) + ' style="height:' + toFixed3(h) + '%;' + getColor(serie.color, colorIndex(serie, s, i), null, useGradient) + '">';
                     items += renderItemContent(s, i, { hideLabel: true, hideValue: true });
                     items += '<div class="nc-tooltip">' + tipBody + '<div class="nc-tooltip-arrow"></div></div>';
                     items += '</div>';
@@ -556,9 +663,9 @@
             for (var i = 0; i < len; i++) {
                 html += isGrouped ? '<div class="nc-group">' : '';
                 for (var idx = 0; idx < count; idx++) {
-                    var val = series[idx].values[i];
+                    var val = series[idx].values[i] || 0;
                     var w = range > 0 ? toFixed3(Math.abs(val) / range * 100) : 0;
-                    var style = 'width:' + w + '%;' + getColor(series[idx].color, i, '90deg', useGradient) + delay(i);
+                    var style = 'width:' + w + '%;' + getColor(series[idx].color, colorIndex(series[idx], idx, i), '90deg', useGradient) + delay(i);
                     if (hasNeg) {
                         if (val >= 0) {
                             style += 'margin-left:' + toFixed3((-minValue) / range * 100) + '%;';
@@ -580,14 +687,13 @@
 
         function renderStackedBar() {
             var html = '';
-            maxStacked = getMaxSum();
             var len = series[0].values.length;
 
             for (var i = 0; i < len; i++) {
                 html += '<div class="nc-stack">';
                 for (var s = 0; s < series.length; s++) {
-                    var w = series[s].values[i] * 100 / maxStacked;
-                    html += '<div class="nc-item"' + dataAttr(s, i) + ' style="width:' + toFixed3(w) + '%;' + getColor(series[s].color, i, '90deg', useGradient) + '">';
+                    var w = maxStacked > 0 ? Math.max(0, (series[s].values[i] || 0)) * 100 / maxStacked : 0;
+                    html += '<div class="nc-item"' + dataAttr(s, i) + ' style="width:' + toFixed3(w) + '%;' + getColor(series[s].color, colorIndex(series[s], s, i), '90deg', useGradient) + '">';
                     html += renderItemContent(s, i, { hideLabel: true, hideValue: true });
                     html += renderTooltip(s, i);
                     html += '</div>';
@@ -597,6 +703,7 @@
             return html;
         }
 
+        // Progress: segments stack left-to-right; sizeArray already clamps negatives to 0.
         function renderHorizontalStacked(useZIndex) {
             var html = '';
             if (!series.length) return html;
@@ -621,6 +728,47 @@
             });
             return html;
         }
+
+        // Waterfall: each bar is a signed delta drawn against the running cumulative total, scaled
+        // to the peak the running total reaches (matching the axis in guidelineData). A negative
+        // delta steps the total DOWN, so the bar spans [total+delta, total] and gets a class so CSS
+        // can distinguish it. This replaces the old code that summed |delta| against the net sum,
+        // which overflowed past 100% and made negative steps invisible.
+        function renderWaterfall() {
+            var html = '';
+            if (!series.length) return html;
+            var serie = series[0];
+            var vals = serie.values;
+            var len = vals.length;
+
+            // Denominator = the highest point the running total reaches (never below 0), niceMax'd
+            // for axis headroom — the same scale guidelineData uses for waterfall.
+            var denom = niceMax(runningPeak(vals));
+            if (!denom) return html;
+
+            var total = 0;
+            for (var i = 0; i < len; i++) {
+                var delta = vals[i] || 0;
+                var startTotal = total;
+                total += delta;
+                var lo = Math.min(startTotal, total);
+                var hi = Math.max(startTotal, total);
+                var left = toFixed3(Math.max(0, lo) / denom * 100);
+                var width = toFixed3(Math.max(0, hi - Math.max(0, lo)) / denom * 100);
+                var neg = delta < 0 ? ' is-negative' : '';
+                var style = 'left:' + left + '%;width:' + width + '%;' + getColor(serie.color, i, '90deg', useGradient) + delay(i);
+                html += '<div class="nc-item' + neg + '"' + dataAttr(0, i) + ' style="' + style + '">';
+                html += renderItemContent(0, i, { hideLabel: true, hideValue: true });
+                html += renderTooltip(0, i);
+                html += '</div>';
+            }
+            return html;
+        }
+
+        // Cache smoothed values per series so the initial render and the post-render positioning
+        // pass share one interpolation instead of recomputing the cubic (hoisted above renderLineArea
+        // and getSmoothedValues, which both read/write it, so the first pass seeds the cache).
+        var _smoothCache = {};
 
         function interpolatePoints(values, steps) {
             var len = values.length;
@@ -659,6 +807,7 @@
 
                 var color = getColorValue(serie.color, idx);
                 var smoothVals = isSmooth ? interpolatePoints(serie.values, SMOOTH_STEPS) : serie.values;
+                _smoothCache[idx] = smoothVals; // seed so positionSegments/Dots/AreaFills reuse it
                 var smoothLen = smoothVals.length;
 
                 if (isArea) {
@@ -694,15 +843,29 @@
             return 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',' + (0.08 + t * 0.82).toFixed(2) + ')';
         }
 
-        // Pick a readable text color (light vs dark) for a solid background.
+        // WCAG relative luminance of an sRGB channel triple (0-255).
+        function relLuminance(rgb) {
+            function lin(c) {
+                c = c / 255;
+                return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+            }
+            return 0.2126 * lin(rgb.r) + 0.7152 * lin(rgb.g) + 0.0722 * lin(rgb.b);
+        }
+
+        // Pick a readable text color (light vs dark) for a solid background using actual WCAG
+        // contrast, not a luma threshold: whichever of white / near-black (#1c1c1e, matching the
+        // CSS is-text-dark token) scores higher contrast wins. On the default palette this picks
+        // dark text (4.4-5.3:1) instead of the lower-contrast white the old threshold chose.
         // Returns '' for non-hex colors so the CSS default applies.
+        var _darkTextLum = relLuminance({ r: 0x1c, g: 0x1c, b: 0x1e });
         function readableTextColor(bg) {
             if (typeof bg !== 'string' || bg.charAt(0) !== '#') return '';
             var rgb = parseHexColor(bg);
             if (isNaN(rgb.r) || isNaN(rgb.g) || isNaN(rgb.b)) return '';
-            // Relative luminance (sRGB perceptual approximation)
-            var lum = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
-            return lum > 0.6 ? 'is-text-dark' : 'is-text-light';
+            var bgLum = relLuminance(rgb);
+            var contrastWhite = 1.05 / (bgLum + 0.05);
+            var contrastDark = (bgLum + 0.05) / (_darkTextLum + 0.05);
+            return contrastDark >= contrastWhite ? 'is-text-dark' : 'is-text-light';
         }
 
         function renderHeatmap() {
@@ -738,12 +901,14 @@
             html += '<div class="nc-heatmap-grid" style="grid-template-columns:repeat(' + cols + ',1fr);grid-template-rows:repeat(' + rows + ',1fr);gap:' + gap + 'px">';
             for (var s = 0; s < rows; s++) {
                 var serie = series[s];
-                var highRgb = parseHexColor(getColorValue(serie.color, 0));
+                // Cycle the palette per row (series index) so rows without explicit colors differ,
+                // matching the documented "cycled" fallback instead of all rendering palette[0].
+                var highRgb = parseHexColor(getColorValue(serie.color, serie.color.length > 1 ? 0 : s));
                 for (var i = 0; i < serie.values.length; i++) {
                     var intensity = heatRange > 0 ? (serie.values[i] - heatMin) / heatRange : 0.5;
                     var cellColor = interpolateColor(highRgb, intensity);
                     var val = formatValue(serie, i);
-                    var titleVal = serie.outputValues.length > 0 ? serie.outputValues[i] : ((serie.prefix || '') + serie.values[i] + (serie.suffix || ''));
+                    var titleVal = hasOutputAt(serie, i) ? serie.outputValues[i] : ((serie.prefix || '') + serie.values[i] + (serie.suffix || ''));
 
                     html += '<div class="nc-heatmap-cell"' + dataAttr(s, i) + ' style="background-color:' + cellColor + '" title="' + escapeHtml(serie.title + ': ' + titleVal) + '">';
                     html += '<span class="nc-heatmap-value">' + val + '</span>';
@@ -881,12 +1046,15 @@
 
         function renderGauge() {
             var serie = series[0];
-            var current = serie.values[0] || 0;
-            var min = serie.values[1] || 0;
-            var max = serie.values[2] || 100;
-            var value = serie.outputValues.length > 0 ? serie.outputValues[0] : current;
+            // Explicit length checks, not `|| default`: a legitimate 0 for min/max/current is falsy
+            // and would otherwise be silently replaced (e.g. a -100..0 gauge).
+            var current = serie.values.length > 0 ? serie.values[0] : 0;
+            var min = serie.values.length > 1 ? serie.values[1] : 0;
+            var max = serie.values.length > 2 ? serie.values[2] : 100;
+            var value = hasOutputAt(serie, 0) ? serie.outputValues[0] : current;
             var range = max - min;
-            var pct = range > 0 ? ((current - min) / range) : 0;
+            // Clamp the fill fraction to [0,1] so over-/under-range values don't paint past the arc.
+            var pct = range > 0 ? Math.max(0, Math.min(1, (current - min) / range)) : 0;
             var color = sanitizeColor(serie.color.length > 0 ? serie.color[0] : DEFAULT_COLOR);
             var trackColor = 'var(--nc-border)';
             var startDeg = 180 + GAUGE_GAP_DEG;
@@ -932,13 +1100,16 @@
         // Build the conic-gradient color stops for a pie/donut, inserting a transparent wedge of
         // `gapDeg` degrees between adjacent slices (split symmetrically across each shared edge).
         // A single slice (or gapDeg <= 0) produces no gaps. Returns the comma-joined stop list.
+        // pie treats negatives as 0 (documented, matching funnel/treemap).
+        function pieVal(v) { return Math.max(0, v || 0); }
+
         function pieSliceStops(serie, total, gapDeg) {
             var n = serie.values.length;
             var halfGap = (n > 1 && gapDeg > 0) ? gapDeg / 2 : 0;
             var stops = [];
             var angle = 0;
             for (var i = 0; i < n; i++) {
-                var sliceAngle = (Math.abs(serie.values[i]) / total) * 360;
+                var sliceAngle = (pieVal(serie.values[i]) / total) * 360;
                 var endAngle = angle + sliceAngle;
                 var color = getColorValue(serie.color, i);
                 // Feather only when the slice can spare it on both sides (and there's a neighbour).
@@ -966,7 +1137,7 @@
             var serie = series[0];
             var total = 0;
             for (var i = 0; i < serie.values.length; i++) {
-                total += Math.abs(serie.values[i]);
+                total += pieVal(serie.values[i]);
             }
             if (!total) return renderEmpty();
 
@@ -996,8 +1167,8 @@
             // Tooltips positioned at each slice's mid-angle (outside the ring)
             var tipAngle = 0;
             for (var i = 0; i < serie.values.length; i++) {
-                var pct = toFixed3(Math.abs(serie.values[i]) / total * 100);
-                var sliceDeg = (Math.abs(serie.values[i]) / total) * 360;
+                var pct = toFixed3(pieVal(serie.values[i]) / total * 100);
+                var sliceDeg = (pieVal(serie.values[i]) / total) * 360;
                 var midDeg = tipAngle + sliceDeg / 2;
                 tipAngle += sliceDeg;
 
@@ -1151,8 +1322,44 @@
                 + '</div>';
         }
 
+        // Visually-hidden data table so screen-reader users get the actual numbers — this is the
+        // non-visual fallback that makes the DOM-text architecture pay off, and the ONLY data source
+        // for pie/gauge (which are pure CSS paint). Styled .nc-sr-only in the stylesheet.
+        function renderSrTable() {
+            if (!series.length || !series[0].values.length) return '';
+            var caption = (config.title.text || (type + ' chart'));
+
+            if (type === 'gauge') {
+                var g = series[0];
+                var parts = [];
+                if (g.values.length > 0) parts.push('current ' + g.values[0]);
+                if (g.values.length > 1) parts.push('minimum ' + g.values[1]);
+                if (g.values.length > 2) parts.push('maximum ' + g.values[2]);
+                return '<table class="nc-sr-only"><caption>' + escapeHtml(caption) + '</caption><tbody><tr>'
+                    + '<th scope="row">' + escapeHtml(g.title || 'Value') + '</th>'
+                    + '<td>' + escapeHtml(parts.join(', ')) + '</td></tr></tbody></table>';
+            }
+
+            var cats = series[0].labels;
+            var html = '<table class="nc-sr-only"><caption>' + escapeHtml(caption) + '</caption><thead><tr><th scope="col">Category</th>';
+            series.forEach(function (serie) {
+                html += '<th scope="col">' + escapeHtml(serie.title || 'Value') + '</th>';
+            });
+            html += '</tr></thead><tbody>';
+            for (var i = 0; i < cats.length; i++) {
+                html += '<tr><th scope="row">' + escapeHtml(cats[i] || String(i + 1)) + '</th>';
+                for (var s = 0; s < series.length; s++) {
+                    html += '<td>' + formatValue(series[s], i) + '</td>';
+                }
+                html += '</tr>';
+            }
+            html += '</tbody></table>';
+            return html;
+        }
+
         function donutMask(innerR) {
-            var mask = 'radial-gradient(circle closest-side,transparent ' + innerR + '%,#000 calc(' + innerR + '% + 1px))';
+            var r = num(innerR, 0); // coerce so a string can't break out of the mask value
+            var mask = 'radial-gradient(circle closest-side,transparent ' + r + '%,#000 calc(' + r + '% + 1px))';
             return '-webkit-mask:' + mask + ';mask:' + mask;
         }
 
@@ -1203,7 +1410,8 @@
             return html + '</div>';
         }
 
-        var gap = config.gap !== undefined ? config.gap : 2;
+        // Coerce to a number so it's safe to interpolate into inline grid-template style strings.
+        var gap = num(config.gap !== undefined ? config.gap : 2, 2);
         var groupGap = Math.max(1, Math.floor(gap / 2));
 
         // Build classes
@@ -1222,7 +1430,11 @@
         var heightProp = type === 'gauge' ? 'height' : 'min-height';
         var safeWidth = sanitizeLength(config.layout.width, '100%');
         var safeHeight = sanitizeLength(config.layout.height, '300px');
-        var chartTemplate = '<div class="' + classes.join(' ') + '" style="width:' + safeWidth + ';' + heightProp + ':' + safeHeight + '">';
+        var ariaLabel = (config.title.text ? config.title.text + ' — ' : '') + type + ' chart';
+        // The container is a labelled group (NOT role="img", which would hide the title, legend,
+        // axis labels, and the screen-reader data table below from assistive tech). role="img" is
+        // scoped to the purely-visual .nc-plot instead (see plotStyle below).
+        var chartTemplate = '<div class="' + classes.join(' ') + '" role="group" aria-label="' + escapeHtml(ariaLabel) + '" style="width:' + safeWidth + ';' + heightProp + ':' + safeHeight + '">';
         if (config.title.text) {
             chartTemplate += '<div class="nc-title" style="text-align:' + sanitizeAlign(config.title.align) + '">' + escapeHtml(config.title.text);
             if (config.title.subtitle) {
@@ -1258,21 +1470,24 @@
 
         var plotStyle = '';
         if (type === 'gauge') {
-            plotStyle = ' style="--gauge-thickness:' + config.gauge.thickness + 'px;--gauge-value-size:' + config.gauge.valueFontSize + 'px"';
+            // Coerce to numbers so a string can't break out of the style attribute.
+            plotStyle = ' style="--gauge-thickness:' + num(config.gauge.thickness, 14) + 'px;--gauge-value-size:' + num(config.gauge.valueFontSize, 48) + 'px"';
         }
-        chartTemplate += '<div class="nc-canvas nc-plot"' + plotStyle + '>';
+        // The plot is the visual-only surface: mark it role="img" with the chart's aria-label and
+        // hide its inner nodes from AT (the real data is exposed by the SR table appended below).
+        chartTemplate += '<div class="nc-canvas nc-plot" role="img" aria-label="' + escapeHtml(ariaLabel) + '"' + plotStyle + '>';
         if (!skipGuidelines) {
             if (render.threshold && render.threshold.length) {
                 chartTemplate += renderThreshold(isHorizontalBar);
             }
-            if (useGrid) {
-                chartTemplate += renderGuidelines(config.layout.lines.number, null);
-            } else {
-                chartTemplate += renderGuidelines(config.layout.lines.number, config.layout.lines.align);
-            }
+            chartTemplate += renderGuidelines(config.layout.lines.number);
         }
 
-        if (series.length > 0 && series[0].values.length > 0 && series[0].labels.length > 0) {
+        // Gauge renders from values alone (current/min/max) and never displays labels, so it must
+        // not require a labels array; every other type needs labels for its axis/legend/items.
+        var hasRenderableData = series.length > 0 && series[0].values.length > 0 &&
+            (type === 'gauge' || series[0].labels.length > 0);
+        if (hasRenderableData) {
             switch (type) {
                 case 'column':
                     chartTemplate += render.stacked ? renderStackedColumn() : renderColumn();
@@ -1284,7 +1499,7 @@
                     chartTemplate += renderHorizontalStacked(true);
                     break;
                 case 'waterfall':
-                    chartTemplate += renderHorizontalStacked(false);
+                    chartTemplate += renderWaterfall();
                     break;
                 case 'line':
                 case 'area':
@@ -1346,6 +1561,9 @@
         chartTemplate += renderLegend();
         chartTemplate += '</div>'; // close .nc-footer
         chartTemplate += '</div>'; // close .nc-chart-body
+        if (hasRenderableData) {
+            chartTemplate += renderSrTable();
+        }
         chartTemplate += '</div>';
 
         // Clean up previous instance
@@ -1357,7 +1575,9 @@
 
         // Event callbacks
         var clickHandler = null;
+        var keyHandler = null;
         var hoverHandler = null;
+        var hoverLeaveHandler = null;
 
         function getEventData(target) {
             var el = target.closest('[data-nc-series]');
@@ -1382,22 +1602,42 @@
                 if (data) config.onClick(data, e);
             };
             element.addEventListener('click', clickHandler);
+
+            // Keyboard activation: Enter/Space on a focused data item fires onClick, matching the
+            // role="button" the item advertises.
+            keyHandler = function (e) {
+                if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+                var data = getEventData(e.target);
+                if (data) {
+                    e.preventDefault();
+                    config.onClick(data, e);
+                }
+            };
+            element.addEventListener('keydown', keyHandler);
         }
 
         if (config.onHover) {
+            // Fire once per item, not once per child element entered.
+            var lastHoverKey = null;
             hoverHandler = function (e) {
                 var data = getEventData(e.target);
-                if (data) config.onHover(data, e);
+                if (!data) return;
+                var key = data.seriesIndex + ':' + data.index;
+                if (key === lastHoverKey) return;
+                lastHoverKey = key;
+                config.onHover(data, e);
+            };
+            hoverLeaveHandler = function () {
+                lastHoverKey = null;
             };
             element.addEventListener('mouseover', hoverHandler);
+            element.addEventListener('mouseleave', hoverLeaveHandler);
         }
 
         // Post-render: position line segments
         var resizeHandler = null;
         var gaugeAnimId = null;
 
-        // Cache smoothed values per series to avoid recomputation on resize
-        var _smoothCache = {};
         function getSmoothedValues(si) {
             if (!_smoothCache[si]) {
                 _smoothCache[si] = config.smooth ? interpolatePoints(series[si].values, SMOOTH_STEPS) : series[si].values;
@@ -1428,10 +1668,11 @@
                 var dist = Math.sqrt(dx * dx + dy * dy);
                 var angle = Math.atan2(dy, dx) * 180 / Math.PI;
 
-                seg.style.width = toFixed3(dist) + 'px';
-                seg.style.left = x1 + 'px';
-                seg.style.top = y1 + 'px';
-                seg.style.transform = 'rotate(' + toFixed3(angle) + 'deg)';
+                // Compositor-friendly: a single transform write instead of left/top/width (which are
+                // layout-bound and forced the transition-disable + reflow dance every resize frame).
+                // The segment is a 1px unit bar (CSS) with transform-origin:0 50%, so translate places
+                // its start, rotate orients it, and scaleX stretches it to length.
+                seg.style.transform = 'translate(' + toFixed3(x1) + 'px,' + toFixed3(y1) + 'px) rotate(' + toFixed3(angle) + 'deg) scaleX(' + toFixed3(dist) + ')';
             });
         }
 
@@ -1479,21 +1720,26 @@
         }
 
         var resizeObserver = null;
+        var pendingResizeRaf = null; // hoisted so destroy() can cancel a queued resize callback
 
         function toggleLegend(el) {
             var legend = el.querySelector('.nc-legend');
             if (!legend) return;
-            legend.style.display = '';
+            // Measure at natural size, then hide VISUALLY (nc-legend-hidden = visually-hidden) rather
+            // than display:none, so on small charts the color key stays available to screen readers.
+            legend.classList.remove('nc-legend-hidden');
             var legendH = legend.offsetHeight;
             var chartH = el.clientHeight;
-            legend.style.display = legendH > chartH / 3 ? 'none' : '';
+            if (legendH > chartH / 3) legend.classList.add('nc-legend-hidden');
         }
 
         function observeResize(callback) {
-            var raf;
             var debounced = function () {
-                if (raf) cancelAnimationFrame(raf);
-                raf = requestAnimationFrame(callback);
+                if (pendingResizeRaf) cancelAnimationFrame(pendingResizeRaf);
+                pendingResizeRaf = requestAnimationFrame(function () {
+                    pendingResizeRaf = null;
+                    callback();
+                });
             };
             if (typeof ResizeObserver !== 'undefined') {
                 resizeObserver = new ResizeObserver(debounced);
@@ -1652,17 +1898,26 @@
             var plotW = canvas.clientWidth;
             if (!plotW) return;
             var values = canvas.querySelectorAll('.nc-item > .nc-main > .nc-value');
-            for (var i = 0; i < values.length; i++) {
-                var valEl = values[i];
-                var bar = valEl.closest('.nc-item');
-                if (!bar) continue;
-                bar.classList.remove('nc-value-inside'); // reset so resize re-evaluates cleanly
-                var pct = parseFloat(bar.getAttribute('data-nc-width')); // final width as % of plot
+            var n = values.length;
+            var bars = [];
+            // Phase 1: reset every value to outside (write-only, no interleaved reads).
+            for (var i = 0; i < n; i++) {
+                var bar = values[i].closest('.nc-item');
+                bars[i] = bar;
+                if (bar) bar.classList.remove('nc-value-inside');
+            }
+            // Phase 2: read all scrollWidths in one batch (single layout flush, not one per bar).
+            var needed = [];
+            for (var j = 0; j < n; j++) {
+                needed[j] = values[j].scrollWidth + 8; // label width + padding
+            }
+            // Phase 3: apply the class where the value would overflow the plot.
+            for (var k = 0; k < n; k++) {
+                if (!bars[k]) continue;
+                var pct = parseFloat(bars[k].getAttribute('data-nc-width')); // final width as % of plot
                 if (isNaN(pct)) continue;
-                var barRightPx = (pct / 100) * plotW;
-                var needed = valEl.scrollWidth + 8; // label width + padding
-                if (barRightPx + needed > plotW) {
-                    bar.classList.add('nc-value-inside');
+                if ((pct / 100) * plotW + needed[k] > plotW) {
+                    bars[k].classList.add('nc-value-inside');
                 }
             }
         }
@@ -1733,15 +1988,17 @@
 
         if (type === 'column') {
             var colCanvas = element.querySelector('.nc-plot');
+            // Cache the item NodeList once (the DOM is stable between render and destroy) instead of
+            // re-querying every resize frame.
+            var colItems = colCanvas.querySelectorAll('.nc-item');
             sizeColumns(colCanvas);
 
             observeResize(function () {
-                var items = colCanvas.querySelectorAll('.nc-item');
-                items.forEach(function (el) { el.style.transition = 'none'; });
+                colItems.forEach(function (el) { el.style.transition = 'none'; });
                 sizeColumns(colCanvas);
                 toggleLegend(element);
                 colCanvas.offsetHeight;
-                items.forEach(function (el) { el.style.transition = ''; });
+                colItems.forEach(function (el) { el.style.transition = ''; });
             });
         }
 
@@ -1855,17 +2112,16 @@
             positionDots(canvas, dots);
             positionAreaFills(canvas);
 
+            // Segments now animate via `transform` only (compositor-friendly), so the old
+            // transition-disable + forced-reflow dance is unnecessary. Dots still use left/top; keep
+            // their transitions suppressed during resize so they snap instead of lagging.
             observeResize(function () {
-                canvas.style.transition = 'none';
-                segs.forEach(function (s) { s.style.transition = 'none'; });
                 dots.forEach(function (d) { d.style.transition = 'none'; });
                 positionSegments(canvas, segs);
                 positionDots(canvas, dots);
                 positionAreaFills(canvas);
                 toggleLegend(element);
                 canvas.offsetHeight;
-                canvas.style.transition = '';
-                segs.forEach(function (s) { s.style.transition = ''; });
                 dots.forEach(function (d) { d.style.transition = ''; });
             });
         }
@@ -1890,10 +2146,7 @@
                     return 1 - Math.pow(1 - t, 3);
                 }
 
-                function animateGauge(timestamp) {
-                    if (!gStartTime) gStartTime = timestamp;
-                    var progress = Math.min((timestamp - gStartTime) / gDuration, 1);
-                    var eased = easeOut(progress);
+                function paintGauge(eased) {
                     var fill = (eased * gPct * gArc).toFixed(1);
 
                     ring.style.background = 'conic-gradient(from ' + gStart + 'deg, '
@@ -1902,13 +2155,24 @@
                         + 'transparent ' + gArc + 'deg)';
 
                     gValEl.textContent = gPre + (eased * gNum).toFixed(gDec) + gSuf;
+                }
+
+                function animateGauge(timestamp) {
+                    if (!gStartTime) gStartTime = timestamp;
+                    var progress = Math.min((timestamp - gStartTime) / gDuration, 1);
+                    paintGauge(easeOut(progress));
 
                     if (progress < 1) {
                         gaugeAnimId = requestAnimationFrame(animateGauge);
                     }
                 }
 
-                gaugeAnimId = requestAnimationFrame(animateGauge);
+                var reduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+                if (!config.animate || reduceMotion) {
+                    paintGauge(1);
+                } else {
+                    gaugeAnimId = requestAnimationFrame(animateGauge);
+                }
             }
         }
 
@@ -1924,7 +2188,7 @@
             var pieAngle = 0;
             var pieSerie = series[0];
             for (var pi = 0; pi < pieSerie.values.length; pi++) {
-                var sliceDeg = (Math.abs(pieSerie.values[pi]) / pieTotal) * 360;
+                var sliceDeg = (pieVal(pieSerie.values[pi]) / pieTotal) * 360;
                 sliceBounds.push({ start: pieAngle, end: pieAngle + sliceDeg });
                 pieAngle += sliceDeg;
             }
@@ -1994,15 +2258,13 @@
 
             var activePieTip = -1;
 
-            pieRing.addEventListener('mousemove', function (e) {
-                var idx = getPieSliceIndex(e);
-                if (idx === activePieTip) return;
+            // Show the tooltip + highlight overlay for slice `idx` (-1 clears). Shared by mouse
+            // hover and keyboard navigation so both paths behave identically.
+            function showPieSlice(idx) {
                 activePieTip = idx;
                 for (var t = 0; t < pieTips.length; t++) {
                     pieTips[t].style.display = t === idx ? '' : 'none';
                 }
-                // Highlight overlay — inset by the same half-gap (cached, no reflow) so it matches
-                // the visible slice exactly, via the shared insetSlice helper.
                 if (idx >= 0 && pieHighlight) {
                     var s = sliceBounds[idx];
                     var h = pieGapDeg > 0 ? insetSlice(s.start, s.end, pieGapDeg / 2) : s;
@@ -2012,31 +2274,53 @@
                 } else if (pieHighlight) {
                     pieHighlight.style.display = 'none';
                 }
+            }
+
+            pieRing.addEventListener('mousemove', function (e) {
+                var idx = getPieSliceIndex(e);
+                if (idx === activePieTip) return;
+                // Fire onHover only when the hovered slice changes, not on every mousemove
+                if (idx >= 0 && config.onHover) config.onHover(pieEventData(idx), e);
+                showPieSlice(idx);
             });
 
             pieRing.addEventListener('mouseleave', function () {
-                activePieTip = -1;
-                for (var t = 0; t < pieTips.length; t++) {
-                    pieTips[t].style.display = 'none';
-                }
-                if (pieHighlight) pieHighlight.style.display = 'none';
+                showPieSlice(-1);
             });
 
             function pieEventData(idx) {
                 return { seriesIndex: 0, index: idx, value: pieSerie.values[idx], label: pieSerie.labels[idx], seriesTitle: pieSerie.title, element: pieRing };
             }
 
+            // Keyboard: the ring is focusable (tabindex set below); arrows cycle slices and
+            // Enter/Space fires onClick — the pie's counterpart to the item keydown handler.
+            if (sliceBounds.length) {
+                pieRing.setAttribute('tabindex', '0');
+                pieRing.setAttribute('role', config.onClick ? 'button' : 'img');
+                pieRing.setAttribute('aria-label', ariaLabel);
+                pieRing.addEventListener('focus', function () {
+                    if (activePieTip < 0) showPieSlice(0);
+                });
+                pieRing.addEventListener('blur', function () { showPieSlice(-1); });
+                pieRing.addEventListener('keydown', function (e) {
+                    var n = sliceBounds.length;
+                    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        showPieSlice(((activePieTip < 0 ? -1 : activePieTip) + 1 + n) % n);
+                    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        showPieSlice(((activePieTip < 0 ? 0 : activePieTip) - 1 + n) % n);
+                    } else if ((e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') && config.onClick && activePieTip >= 0) {
+                        e.preventDefault();
+                        config.onClick(pieEventData(activePieTip), e);
+                    }
+                });
+            }
+
             if (config.onClick) {
                 pieRing.addEventListener('click', function (e) {
                     var idx = getPieSliceIndex(e);
                     if (idx >= 0) config.onClick(pieEventData(idx), e);
-                });
-            }
-
-            if (config.onHover) {
-                pieRing.addEventListener('mousemove', function (e) {
-                    var idx = getPieSliceIndex(e);
-                    if (idx >= 0) config.onHover(pieEventData(idx), e);
                 });
             }
         }
@@ -2059,24 +2343,50 @@
 
         function destroy() {
             if (clickHandler) element.removeEventListener('click', clickHandler);
+            if (keyHandler) element.removeEventListener('keydown', keyHandler);
             if (hoverHandler) element.removeEventListener('mouseover', hoverHandler);
+            if (hoverLeaveHandler) element.removeEventListener('mouseleave', hoverLeaveHandler);
             if (resizeHandler) window.removeEventListener('resize', resizeHandler);
             if (resizeObserver) resizeObserver.disconnect();
             if (gaugeAnimId) cancelAnimationFrame(gaugeAnimId);
+            if (pendingResizeRaf) cancelAnimationFrame(pendingResizeRaf);
             element.innerHTML = '';
             delete element._ncDestroy;
         }
 
         element._ncDestroy = destroy;
 
-        return {
+        // Stable handle: destroy()/update() delegate through element._ncDestroy so an old handle
+        // kept after update() still targets the CURRENT instance (the previous code returned a NEW
+        // object each update, so a stale handle's destroy() wiped the new chart and leaked its
+        // listeners/observer). update() also carries the merged options forward and forces
+        // animate:false unless the caller re-enables it, so a data refresh doesn't replay the
+        // staggered entry animation every tick.
+        var handle = {
             element: element,
-            destroy: destroy,
+            destroy: function () {
+                if (element._ncDestroy) element._ncDestroy();
+            },
             update: function (newOptions) {
-                destroy();
-                return neoCharts(element, deepMerge(options || {}, newOptions || {}));
+                newOptions = newOptions || {};
+                var mergedNew = deepMerge({ animate: false }, newOptions);
+                var next = deepMerge(options || {}, mergedNew);
+                // deepMerge replaces arrays wholesale, so a partial series payload (e.g. {values}
+                // only) would drop labels/colors. Merge each incoming series onto the previous one
+                // by index so partial updates keep the fields they didn't set.
+                if (newOptions.data && newOptions.data.series && options && options.data && options.data.series) {
+                    next.data.series = newOptions.data.series.map(function (s, i) {
+                        var prev = options.data.series[i];
+                        return prev ? deepMerge(prev, s) : s;
+                    });
+                }
+                options = next;
+                if (element._ncDestroy) element._ncDestroy();
+                neoCharts(element, options);
+                return handle;
             }
         };
+        return handle;
     }
 
     return neoCharts;

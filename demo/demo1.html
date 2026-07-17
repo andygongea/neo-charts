@@ -104,7 +104,7 @@
         .grid .card > [class^="chart-"] > .nc-chart { flex: 1; }
         .card:hover, .stat-card:hover { border-color: var(--db-card-hover); }
         .card-header { padding: 22px 26px 0; display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1; }
-        .card-header .card-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--db-muted); }
+        .card-header .card-label { margin: 0; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--db-muted); }
         .card-header .card-tag { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; padding: 3px 10px; border-radius: 4px; }
         .tag-critical { background: var(--db-tag-critical-bg); color: var(--db-tag-critical-text); }
         .tag-info { background: var(--db-tag-info-bg); color: var(--db-tag-info-text); }
@@ -129,7 +129,7 @@
 
         /* Section Dividers */
         .section { margin-top: 44px; }
-        .section-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 2.5px; color: var(--db-muted); margin-bottom: 18px; padding-left: 2px; }
+        .section-title { margin: 0 0 18px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 2.5px; color: var(--db-muted); padding-left: 2px; }
 
         /* Gauge Row */
         .gauge-row { display: flex; gap: 24px; justify-content: center; }
@@ -192,18 +192,18 @@
 
         <!-- Row 1: CVE Trend + Severity -->
         <div class="section">
-            <div class="section-title">Vulnerability Landscape</div>
+            <h2 class="section-title">Vulnerability Landscape</h2>
             <div class="grid grid-2">
                 <div class="card accent-cyan">
                     <div class="card-header">
-                        <span class="card-label">Monthly CVE Disclosures</span>
+                        <h3 class="card-label">Monthly CVE Disclosures</h3>
                         <span class="card-tag tag-critical">Trend</span>
                     </div>
                     <div class="chart-cve-trend"></div>
                 </div>
                 <div class="card accent-amber">
                     <div class="card-header">
-                        <span class="card-label">Severity Breakdown</span>
+                        <h3 class="card-label">Severity Breakdown</h3>
                         <span class="card-tag tag-warning">Distribution</span>
                     </div>
                     <div class="chart-severity"></div>
@@ -213,18 +213,18 @@
 
         <!-- Row 2: Top Vulns by Type + OWASP -->
         <div class="section">
-            <div class="section-title">Vulnerability Classification</div>
+            <h2 class="section-title">Vulnerability Classification</h2>
             <div class="grid grid-2">
                 <div class="card accent-red">
                     <div class="card-header">
-                        <span class="card-label">Top Vulnerability Types</span>
+                        <h3 class="card-label">Top Vulnerability Types</h3>
                         <span class="card-tag tag-info">By CVE Count</span>
                     </div>
                     <div class="chart-vuln-types"></div>
                 </div>
                 <div class="card accent-rose">
                     <div class="card-header">
-                        <span class="card-label">OWASP Top 10 2025</span>
+                        <h3 class="card-label">OWASP Top 10 2025</h3>
                         <span class="card-tag tag-critical">Incident Rate</span>
                     </div>
                     <div class="chart-owasp"></div>
@@ -234,18 +234,18 @@
 
         <!-- Row 3: Breaches + Attack Vectors -->
         <div class="section">
-            <div class="section-title">Threat Intelligence</div>
+            <h2 class="section-title">Threat Intelligence</h2>
             <div class="grid grid-2">
                 <div class="card accent-red">
                     <div class="card-header">
-                        <span class="card-label">Costliest Data Breaches</span>
+                        <h3 class="card-label">Costliest Data Breaches</h3>
                         <span class="card-tag tag-critical">2024-2025</span>
                     </div>
                     <div class="chart-breaches"></div>
                 </div>
                 <div class="card accent-purple">
                     <div class="card-header">
-                        <span class="card-label">Attack Vector Distribution</span>
+                        <h3 class="card-label">Attack Vector Distribution</h3>
                         <span class="card-tag tag-warning">2025</span>
                     </div>
                     <div class="chart-vectors"></div>
@@ -255,18 +255,18 @@
 
         <!-- Row 4: Vulnerable Packages + MTTR -->
         <div class="section">
-            <div class="section-title">Supply Chain &amp; Remediation</div>
+            <h2 class="section-title">Supply Chain &amp; Remediation</h2>
             <div class="grid grid-2">
                 <div class="card accent-cyan">
                     <div class="card-header">
-                        <span class="card-label">Vulnerable Open Source Packages</span>
+                        <h3 class="card-label">Vulnerable Open Source Packages</h3>
                         <span class="card-tag tag-info">Known CVEs</span>
                     </div>
                     <div class="chart-packages"></div>
                 </div>
                 <div class="card accent-green">
                     <div class="card-header">
-                        <span class="card-label">Mean Time to Patch</span>
+                        <h3 class="card-label">Mean Time to Patch</h3>
                         <span class="card-tag tag-success">By Industry</span>
                     </div>
                     <div class="chart-mttr"></div>
@@ -276,18 +276,18 @@
 
         <!-- Row 5: Multi-Series Line & Area -->
         <div class="section">
-            <div class="section-title">Multi-Series Trends</div>
+            <h2 class="section-title">Multi-Series Trends</h2>
             <div class="grid grid-2">
                 <div class="card accent-cyan">
                     <div class="card-header">
-                        <span class="card-label">Incident Response by Category</span>
+                        <h3 class="card-label">Incident Response by Category</h3>
                         <span class="card-tag tag-info">Line</span>
                     </div>
                     <div class="chart-incidents-line"></div>
                 </div>
                 <div class="card accent-purple">
                     <div class="card-header">
-                        <span class="card-label">Threat Volume by Source</span>
+                        <h3 class="card-label">Threat Volume by Source</h3>
                         <span class="card-tag tag-warning">Area</span>
                     </div>
                     <div class="chart-threats-area"></div>
@@ -297,18 +297,18 @@
 
         <!-- Row 6: Multi-Series Column & Bar -->
         <div class="section">
-            <div class="section-title">Multi-Series Comparisons</div>
+            <h2 class="section-title">Multi-Series Comparisons</h2>
             <div class="grid grid-2">
                 <div class="card accent-red">
                     <div class="card-header">
-                        <span class="card-label">Vulnerabilities by Severity &amp; Quarter</span>
+                        <h3 class="card-label">Vulnerabilities by Severity &amp; Quarter</h3>
                         <span class="card-tag tag-critical">Grouped Column</span>
                     </div>
                     <div class="chart-vuln-quarter-col"></div>
                 </div>
                 <div class="card accent-sky">
                     <div class="card-header">
-                        <span class="card-label">Incidents by Team</span>
+                        <h3 class="card-label">Incidents by Team</h3>
                         <span class="card-tag tag-info">Grouped Bar</span>
                     </div>
                     <div class="chart-team-bar"></div>
@@ -318,18 +318,18 @@
 
         <!-- Row 7: Stacked Column & Bar -->
         <div class="section">
-            <div class="section-title">Stacked Comparisons</div>
+            <h2 class="section-title">Stacked Comparisons</h2>
             <div class="grid grid-2">
                 <div class="card accent-green">
                     <div class="card-header">
-                        <span class="card-label">Resolved vs Pending by Quarter</span>
+                        <h3 class="card-label">Resolved vs Pending by Quarter</h3>
                         <span class="card-tag tag-success">Stacked Column</span>
                     </div>
                     <div class="chart-stacked-col"></div>
                 </div>
                 <div class="card accent-rose">
                     <div class="card-header">
-                        <span class="card-label">Alert Sources by Severity</span>
+                        <h3 class="card-label">Alert Sources by Severity</h3>
                         <span class="card-tag tag-critical">Stacked Bar</span>
                     </div>
                     <div class="chart-stacked-bar"></div>
@@ -339,18 +339,18 @@
 
         <!-- Row 6: LLM Vuln Rates + Zero Days -->
         <div class="section">
-            <div class="section-title">AI Code Security &amp; Zero-Day Trends</div>
+            <h2 class="section-title">AI Code Security &amp; Zero-Day Trends</h2>
             <div class="grid grid-2">
                 <div class="card accent-amber">
                     <div class="card-header">
-                        <span class="card-label">LLM Insecure Code Generation</span>
+                        <h3 class="card-label">LLM Insecure Code Generation</h3>
                         <span class="card-tag tag-warning">% Vulnerable</span>
                     </div>
                     <div class="chart-llm"></div>
                 </div>
                 <div class="card accent-amber">
                     <div class="card-header">
-                        <span class="card-label">Zero-Day Exploits Discovered</span>
+                        <h3 class="card-label">Zero-Day Exploits Discovered</h3>
                         <span class="card-tag tag-critical">Quarterly</span>
                     </div>
                     <div class="chart-zeroday"></div>
@@ -360,11 +360,11 @@
 
         <!-- Row 6: Heatmap (new) -->
         <div class="section">
-            <div class="section-title">Attack Frequency</div>
+            <h2 class="section-title">Attack Frequency</h2>
             <div class="grid grid-1">
                 <div class="card accent-cyan">
                     <div class="card-header">
-                        <span class="card-label">Attack Attempts by Day &amp; Hour</span>
+                        <h3 class="card-label">Attack Attempts by Day &amp; Hour</h3>
                         <span class="card-tag tag-info">Weekly Pattern</span>
                     </div>
                     <div class="chart-heatmap"></div>
@@ -374,7 +374,7 @@
 
         <!-- Row 7: Gauges -->
         <div class="section">
-            <div class="section-title">Security Posture</div>
+            <h2 class="section-title">Security Posture</h2>
             <div class="gauge-row">
                 <div class="card accent-amber"><div class="gauge-patch"></div></div>
                 <div class="card accent-cyan"><div class="gauge-coverage"></div></div>
@@ -384,7 +384,7 @@
 
         <!-- Row 8: New Chart Types -->
         <div class="section">
-            <div class="section-title">New Chart Types</div>
+            <h2 class="section-title">New Chart Types</h2>
             <div class="grid grid-3">
                 <div class="card">
                     <div class="chart-pie"></div>
@@ -475,7 +475,7 @@
                 title: { text: 'Costliest Breaches (2024-2025)', align: 'center' },
                 type: 'column', theme: t, highlight: true,
                 layout: { width: '100%', height: '280px' },
-                data: { render: { margin: 0.5 }, series: [{ title: 'Cost', values: [3090,1200,850,750,420], labels: ['UnitedHealth','MOVEit (Clop)','AT&T Wireless','Snowflake','Natl Public Data'], outputValues: ['$3.1B','$1.2B','$850M','$750M','$420M'], color: [c.red,c.rose,c.amber,c.purple,c.slate], prefix: '$', suffix: 'M', decimals: 0 }] }
+                data: { series: [{ title: 'Cost', values: [3090,1200,850,750,420], labels: ['UnitedHealth','MOVEit (Clop)','AT&T Wireless','Snowflake','Natl Public Data'], outputValues: ['$3.1B','$1.2B','$850M','$750M','$420M'], color: [c.red,c.rose,c.amber,c.purple,c.slate], prefix: '$', suffix: 'M', decimals: 0 }] }
             }));
 
             // ── 6. Attack Vector Distribution (Treemap) ──
@@ -491,7 +491,7 @@
                 title: { text: 'Top Vulnerable Packages (Known CVEs)', align: 'center' },
                 type: 'column', theme: t, highlight: true,
                 layout: { width: '100%', height: '280px' },
-                data: { render: { margin: 0.3 }, series: [{ title: 'CVEs', values: [44,37,22,18,14,12,8,6,5,4], labels: ['spring-framework','django','pillow','log4j','express','lodash','webpack-dev','requests','cross-spawn','jdom2'], color: [c.cyan,c.sky,c.teal,c.red,c.amber,c.amber,c.purple,c.indigo,c.slate,c.slate], decimals: 0 }] }
+                data: { series: [{ title: 'CVEs', values: [44,37,22,18,14,12,8,6,5,4], labels: ['spring-framework','django','pillow','log4j','express','lodash','webpack-dev','requests','cross-spawn','jdom2'], color: [c.cyan,c.sky,c.teal,c.red,c.amber,c.amber,c.purple,c.indigo,c.slate,c.slate], decimals: 0 }] }
             }));
 
             // ── 8. Mean Time to Patch (Bar) ──
@@ -507,7 +507,7 @@
                 title: { text: 'LLM Insecure Code Generation (%)', align: 'center' },
                 type: 'column', theme: t, highlight: true,
                 layout: { width: '100%', height: '280px' },
-                data: { render: { margin: 0.3 }, series: [{ title: 'Insecure %', values: [90,85,82,80,78,74,70,40], labels: ['GPT-4o','GPT-4.1','DeepSeek V2','CodeLlama','Llama 3.1','Copilot','Gemini 1.5','Claude 3.7'], outputValues: ['90%','85%','82%','80%','78%','74%','70%','40%'], color: [c.red,c.red,c.rose,c.rose,c.amber,c.amber,c.sky,c.green], suffix: '%', decimals: 0 }] }
+                data: { series: [{ title: 'Insecure %', values: [90,85,82,80,78,74,70,40], labels: ['GPT-4o','GPT-4.1','DeepSeek V2','CodeLlama','Llama 3.1','Copilot','Gemini 1.5','Claude 3.7'], outputValues: ['90%','85%','82%','80%','78%','74%','70%','40%'], color: [c.red,c.red,c.rose,c.rose,c.amber,c.amber,c.sky,c.green], suffix: '%', decimals: 0 }] }
             }));
 
             // ── 10. Multi-Series Line — Incident Response ──
@@ -539,7 +539,7 @@
                 title: { text: 'Vulnerabilities by Severity & Quarter', align: 'center' },
                 type: 'column', theme: t, highlight: true,
                 layout: { width: '100%', height: '280px' },
-                data: { render: { margin: 0.3 }, series: [
+                data: { series: [
                     { title: 'Critical', values: [820,950,1100,1080], labels: ['Q1','Q2','Q3','Q4'], color: [c.red], decimals: 0 },
                     { title: 'High', values: [3200,3500,3800,4100], labels: ['Q1','Q2','Q3','Q4'], color: [c.amber], decimals: 0 },
                     { title: 'Medium', values: [5400,5800,6100,6460], labels: ['Q1','Q2','Q3','Q4'], color: [c.sky], decimals: 0 }
@@ -563,7 +563,7 @@
                 title: { text: 'Resolved vs Pending by Quarter', align: 'center' },
                 type: 'column', theme: t, highlight: true,
                 layout: { width: '100%', height: '280px' },
-                data: { render: { stacked: true, margin: 0.3 }, series: [
+                data: { render: { stacked: true }, series: [
                     { title: 'Resolved', values: [3800,4200,4600,5100], labels: ['Q1','Q2','Q3','Q4'], color: [c.green], decimals: 0 },
                     { title: 'Pending', values: [1200,980,850,620], labels: ['Q1','Q2','Q3','Q4'], color: [c.amber], decimals: 0 },
                     { title: 'Escalated', values: [400,350,420,380], labels: ['Q1','Q2','Q3','Q4'], color: [c.red], decimals: 0 }

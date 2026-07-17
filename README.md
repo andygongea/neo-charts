@@ -8,9 +8,10 @@ Lightweight HTML/CSS chart library with zero dependencies. No SVG, no Canvas —
 - **Pure CSS rendering** — all chart elements are styled DOM nodes, no SVG or Canvas
 - **Responsive** — charts resize with their container via ResizeObserver
 - **Pixel-perfect** — every item gets the same integer pixel size for crisp, even shapes (column, bar, funnel); any leftover pixels trail as space at the end
-- **Animated** — entry animations and smooth hover transitions
+- **Animated** — entry animations and smooth hover transitions (automatically disabled when the user prefers reduced motion)
 - **Interactive** — tooltips on hover, highlight mode with bidirectional label sync (bar/waterfall)
-- **Configurable** — gradient or flat fills, gap between items, gauge thickness, default color palette, light/dark themes
+- **Accessible** — the plot is `role="img"` while a visually-hidden data table exposes every value to screen readers; data items are keyboard-focusable with `Enter`/arrow-key support, focus states mirror hover states, and motion respects `prefers-reduced-motion`
+- **Configurable** — gradient or flat fills, gap between items, gauge thickness, per-series colors (over a built-in 20-color default palette), light/dark themes
 - **12 chart types** — column, bar, line, area, progress, waterfall, heatmap, treemap, gauge, pie (with donut variant), bullet, funnel (with trapezoid variant)
 - **Multi-series** — grouped and stacked modes for column and bar charts
 
@@ -385,11 +386,11 @@ neoCharts('.chart', {
 | `cssClass` | string | `''` | Additional CSS class on the chart container |
 | `highlight` | boolean | `false` | Dim sibling items on hover (bidirectional for bar/waterfall labels) |
 | `animate` | boolean | `true` | Animate items on initial render |
-| `legend` | boolean | `true` | Show legend when applicable. Auto-hidden if it would occupy more than a third of the chart height. |
+| `legend` | boolean | `true` | Show legend when applicable. Auto-hidden if it would occupy more than a third of the chart height. Not rendered for `gauge`, `heatmap`, `treemap`, `funnel`, and `bullet` charts, which draw their labels on the chart itself. |
 | `gradient` | boolean | `true` | Apply a subtle gradient fade to data fills (column, bar, progress, waterfall, treemap, funnel, pie/donut). Set `false` for flat solid fills. |
-| `smooth` | boolean | `false` | Use smooth curves for line/area charts |
-| `fit` | boolean | `false` | Fit chart to container |
-| `gap` | number | `2` | Gap in pixels between chart items. Applies to `column`, `bar`, `waterfall`, `treemap`, `heatmap`, and `donut` (spacing between slices; donut only — ignored on a full pie). |
+| `smooth` | boolean | `false` | Use smooth curves for line/area charts. Smoothing renders 8 interpolated segments per data point — since every segment is a DOM element, keep line/area datasets to a few hundred points for best performance. |
+| `fit` | boolean | `false` | Progress only: stretch the progress track to fill the container height. No effect on other chart types. |
+| `gap` | number | `2` | Gap in pixels between chart items. Applies to `column`, `bar`, `bullet`, `waterfall`, `treemap`, `heatmap`, and `donut` (spacing between slices; donut only — ignored on a full pie). |
 | `theme` | string | `'dark'` | Color theme: `'dark'` or `'light'` |
 | `gauge.thickness` | number | `14` | Gauge ring thickness in pixels |
 | `gauge.valueFontSize` | number | `48` | Gauge value font size in pixels |
@@ -405,10 +406,9 @@ neoCharts('.chart', {
 | `layout.width` | string | `'100%'` | Chart width (CSS value) |
 | `layout.height` | string | `'300px'` | Chart height (CSS value or `'auto'`) |
 | `layout.lines.number` | number | `4` | Number of guideline lines |
-| `layout.lines.align` | string | `'right'` | Guideline label position: `left`, `right` |
 | `data.render.empty` | string | `'No data available.'` | Message shown when series has no data |
 | `data.render.stacked` | boolean | `false` | Stack multiple series (column/bar) |
-| `data.render.threshold` | array | `[]` | Threshold marker lines. Each entry is a data value (positioned against the auto axis) or a string percentage like `'75%'`. Drawn horizontally on column/line/area, vertically on bar/waterfall. |
+| `data.render.threshold` | array | `[]` | Threshold marker lines. Each entry is a data value (positioned on the same auto axis as the guidelines — including stacked, waterfall, and negative-min scales) or a string percentage like `'75%'`. Drawn horizontally on column/line/area, vertically on bar/waterfall/bullet. |
 | `data.series` | array | `[]` | Array of series objects |
 | `onClick` | function | `null` | Callback when a chart item is clicked. Receives `(eventData, domEvent)` where `eventData` has `seriesIndex`, `index`, `value`, `label`, `seriesTitle`, `element`. Fires for all chart types including gauge (index 0 = current value). |
 | `onHover` | function | `null` | Callback when a chart item is hovered. Same signature as `onClick`. |
@@ -421,10 +421,10 @@ neoCharts('.chart', {
 | `values` | number[] | Data values |
 | `labels` | string[] | Label for each value |
 | `outputValues` | string[] | Custom display values (e.g. `['1.2K', '3.4M']`). Falls back to raw values if empty. |
-| `color` | string[] | One color for the whole series, or one per item. When omitted, a built-in 20-color palette is used automatically (cycled by item, or by series index for line/area). |
+| `color` | string[] | One color for the whole series, or one per item. When omitted, a built-in 20-color palette is used automatically — cycled by item for a single-series column/bar/pie, and by series index for multi-series (grouped/stacked) column/bar, line/area, and heatmap rows. |
 | `prefix` | string | Prepended to displayed values (e.g. `'$'`) |
 | `suffix` | string | Appended to displayed values (e.g. `'%'`) |
-| `decimals` | number | Decimal places in tooltips (default: `3`) |
+| `decimals` | number | Decimal places for formatted values — tooltips and the on-chart values of heatmap/treemap/funnel (default: `3`) |
 
 ### Default Color Palette
 
@@ -438,18 +438,25 @@ When no `color` array is provided, items cycle through this 20-color palette:
 
 | Method | Description |
 |---|---|
-| `chart.update(newOptions)` | Merge new options and re-render the chart. Returns a new API object. |
-| `chart.destroy()` | Remove the chart and clean up event listeners. |
+| `chart.update(newOptions)` | Merge new options and re-render. `data.series` entries merge onto the existing series by index, so a partial payload like `{ values: [...] }` keeps the previous labels/colors. Re-render skips the entry animation unless you pass `animate: true`. Returns the **same** handle, so the original reference stays valid after updating. |
+| `chart.destroy()` | Remove the chart and clean up event listeners, the resize observer, and any pending animation frame. |
 | `chart.element` | The DOM element containing the chart. |
+
+Note: `neoCharts(selector, options)` returns `undefined` (with a console warning) when the selector matches no element.
 
 ## Notes
 
-- **Non-negative chart types** — `pie`, `funnel`, and `treemap` are proportional and treat negative values as `0` (a console warning is emitted). Use `column`/`bar`/`line`/`area` for data that crosses zero.
+- **Non-negative chart types** — `pie`, `funnel`, `treemap`, and `progress` (plus stacked `column`/`bar`) are proportional or cumulative and treat negative values as `0` (a console warning is emitted). Use non-stacked `column`/`bar`/`line`/`area` for data that crosses zero; `waterfall` handles signed deltas natively (negative steps move the running total down and are hatched).
+- **Waterfall is single-series** — a waterfall renders one running total, so extra series are ignored with a console warning.
+- **Auto labels** — if a series has `values` but no `labels` (and the type isn't `gauge`), placeholder labels `"1"`, `"2"`, … are generated so the chart still renders. `gauge` needs no labels at all.
+- **Accessibility** — every chart appends a visually-hidden data table so screen-reader users get the underlying numbers; the plot itself is `role="img"`. Interactive data items are keyboard-focusable (`Tab`), activate `onClick` on `Enter`/`Space`, and pie slices cycle with the arrow keys.
 - **Global alias** — `simpleChart` is exposed as a backward-compatible alias for `neoCharts` when loaded via a plain `<script>` tag.
 
 ## Demo
 
-- [demo/demo1.html](demo/demo1.html) — full security dashboard (23 charts)
+- [demo/demo1.html](demo/demo1.html) — full security dashboard (25 charts)
+- [demo/demo2.html](demo/demo2.html) — type gallery showing the chart / empty / config states for each type
+- [demo/editor.html](demo/editor.html) — live chart editor: tweak options and copy the generated config
 
 ## License
 
