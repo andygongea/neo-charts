@@ -8,25 +8,27 @@
     <meta property="og:title" content="Neo Charts">
     <meta property="og:description" content="Twelve chart types rendered as styled DOM elements. No SVG, no Canvas, no build step.">
     <meta property="og:type" content="website">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%23eb453b'/%3E%3Cg fill='%23fff'%3E%3Crect x='5' y='12' width='3' height='7' rx='1'/%3E%3Crect x='10.5' y='7' width='3' height='12' rx='1'/%3E%3Crect x='16' y='9.5' width='3' height='9.5' rx='1'/%3E%3C/g%3E%3C/svg%3E">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%2300aeff'/%3E%3Cg fill='%23fff'%3E%3Crect x='5' y='12' width='3' height='7' rx='1'/%3E%3Crect x='10.5' y='7' width='3' height='12' rx='1'/%3E%3Crect x='16' y='9.5' width='3' height='9.5' rx='1'/%3E%3C/g%3E%3C/svg%3E">
     <link rel="stylesheet" href="neo-charts.css">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-            /* Warm near-black base, one desaturated accent (the library's own palette[0]). */
-            --bg: #14130f;
-            --bg-raised: #1c1a15;
+            /* Cool near-black base (matched to the cool blue accent), one accent color. */
+            --bg: #0d1117;
+            --bg-raised: #151b24;
             --line: rgba(255, 255, 255, .09);
             --line-soft: rgba(255, 255, 255, .055);
-            --ink: #f3efe6;
-            --ink-2: #b3ac9d;
-            --ink-3: #7a7365;
-            --accent: #eb453b;
-            /* Slightly deeper red for filled buttons so white label text clears WCAG AA (4.5:1). */
-            --accent-btn: #c92f25;
-            --accent-ink: #ff877c;
-            --shadow: 0 1px 2px rgba(0,0,0,.4), 0 18px 40px -18px rgba(0,0,0,.6);
+            --ink: #eef2f7;
+            --ink-2: #a6b0bd;
+            --ink-3: #6e7885;
+            /* Brand accent used for the chart, borders, hover glow (not text-critical surfaces). */
+            --accent: #00aeff;
+            /* Darker blue for filled buttons so white label text clears WCAG AA (4.5:1). */
+            --accent-btn: #0079b4;
+            /* Accent tint used for text/links on the dark base (7.5:1 on #0d1117). */
+            --accent-ink: #4cc4ff;
+            --shadow: 0 1px 2px rgba(0,0,0,.4), 0 18px 40px -18px rgba(0,0,0,.65);
             --radius: 14px;
             --maxw: 1140px;
             /* Sans display + sans body (same family, weight for hierarchy). No serif, no Inter. */
@@ -34,17 +36,18 @@
             --mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
         }
         :root[data-theme="light"] {
-            --bg: #f5f2ec;
+            --bg: #f2f5f8;
             --bg-raised: #ffffff;
             --line: rgba(0, 0, 0, .1);
             --line-soft: rgba(0, 0, 0, .06);
-            --ink: #1a1813;
-            --ink-2: #514c42;
-            --ink-3: #857e72;
-            --accent: #d33a30;
-            --accent-btn: #c92f25;
-            --accent-ink: #b0271e;
-            --shadow: 0 1px 2px rgba(0,0,0,.05), 0 18px 44px -22px rgba(60,45,25,.3);
+            --ink: #141a21;
+            --ink-2: #48515c;
+            --ink-3: #79828f;
+            --accent: #0090df;
+            --accent-btn: #0079b4;
+            /* Darker blue so accent text clears WCAG AA on the light base (5:1 on #f2f5f8). */
+            --accent-ink: #006ea6;
+            --shadow: 0 1px 2px rgba(0,0,0,.05), 0 18px 44px -22px rgba(20,40,70,.28);
         }
 
         html { scroll-behavior: smooth; }
@@ -97,9 +100,12 @@
         .hero { display: grid; grid-template-columns: 1.02fr 1fr; gap: 52px; align-items: center; padding: 88px 0 72px; }
         .eyebrow { display: inline-block; font-size: 12.5px; font-weight: 600; letter-spacing: .02em; color: var(--accent-ink); margin-bottom: 22px; }
         .hero h1 {
-            font-weight: 640; font-size: clamp(2.6rem, 1.3rem + 3.9vw, 4.3rem);
-            line-height: 1.04; letter-spacing: -.03em; color: var(--ink); text-wrap: balance;
+            font-weight: 640; font-size: clamp(2.35rem, 1.2rem + 3.2vw, 3.8rem);
+            line-height: 1.05; letter-spacing: -.03em; color: var(--ink); text-wrap: balance;
         }
+        /* Keep the two sentences on their own lines at desktop; collapse to natural flow on mobile. */
+        .hero h1 .lb { display: block; }
+        @media (max-width: 520px) { .hero h1 .lb { display: inline; } }
         .hero h1 b { color: var(--accent-ink); font-weight: 640; }
         .hero .deck { margin-top: 22px; max-width: 34ch; font-size: 1.06rem; line-height: 1.6; color: var(--ink-2); }
         .cta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 13px; margin-top: 32px; }
@@ -154,11 +160,31 @@
         .points { margin-top: 22px; display: flex; flex-direction: column; gap: 13px; list-style: none; }
         .points li { display: flex; gap: 12px; font-size: 14.5px; color: var(--ink-2); }
         .points svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; color: var(--accent); }
+        .points code { color: var(--accent-ink); background: color-mix(in srgb, var(--accent) 10%, transparent); padding: 1px 5px; border-radius: 4px; white-space: nowrap; }
         pre { font-family: var(--mono); font-size: 13px; line-height: 1.75; background: var(--bg-raised); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px 24px; overflow-x: auto; color: var(--ink); box-shadow: var(--shadow); }
         pre .c { color: var(--ink-3); }
         pre .k { color: var(--accent-ink); }
         pre .s { color: #9bbd6a; }
         :root[data-theme="light"] pre .s { color: #5a7d2e; }
+
+        /* Maker section (centered card, modeled on the iveeo.com maker block) */
+        #maker { padding-top: 40px; }
+        .maker { max-width: 720px; margin: 0 auto; text-align: center; padding: 44px 36px; border: 1px solid var(--line); border-radius: 20px; background: var(--bg-raised); box-shadow: var(--shadow); }
+        .maker-avatar { width: 68px; height: 68px; margin: 0 auto 20px; border-radius: 50%; display: grid; place-items: center; font-size: 22px; font-weight: 660; letter-spacing: .01em; color: #fff; background: linear-gradient(150deg, var(--accent), color-mix(in srgb, var(--accent) 60%, #0a3a56)); box-shadow: 0 4px 18px -4px color-mix(in srgb, var(--accent) 55%, transparent); }
+        .maker h2 { font-size: 1.4rem; font-weight: 640; letter-spacing: -.02em; color: var(--ink); }
+        .maker-bio { max-width: 52ch; margin: 12px auto 0; font-size: 15px; line-height: 1.65; color: var(--ink-2); }
+        .maker-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 30px auto 4px; text-align: left; }
+        .maker-col { border: 1px solid var(--line-soft); border-radius: 12px; padding: 16px 18px; }
+        .maker-label { display: block; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 12px; }
+        .maker-col ul { list-style: none; display: flex; flex-direction: column; gap: 11px; }
+        .maker-col li { display: flex; flex-direction: column; gap: 2px; font-size: 14px; }
+        .maker-col .mk-n, .maker-col a { color: var(--ink); font-weight: 600; }
+        .maker-col a { transition: color .18s; }
+        .maker-col a:hover { color: var(--accent-ink); }
+        .maker-col .mk-r { font-size: 12.5px; color: var(--ink-3); }
+        .maker-links { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 14px; margin-top: 26px; }
+        .maker-tags { display: flex; flex-wrap: wrap; gap: 7px; }
+        .maker-tags span { font-size: 12px; color: var(--ink-3); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; }
 
         /* Footer */
         footer { border-top: 1px solid var(--line-soft); }
@@ -175,6 +201,8 @@
             .stat:nth-child(1), .stat:nth-child(2) { border-bottom: 1px solid var(--line-soft); }
             .demo-row { grid-template-columns: 1fr; gap: 12px; }
             .demo-row .go { margin-top: 2px; }
+            .maker-meta { grid-template-columns: 1fr; }
+            .maker { padding: 36px 22px; }
             .topnav .nav-link { display: none; }
         }
     </style>
@@ -204,8 +232,8 @@
             <section class="hero">
                 <div class="hero-copy" data-reveal>
                     <span class="eyebrow">Zero dependencies, MIT licensed</span>
-                    <h1>Charts made of plain <b>HTML</b>, not pixels.</h1>
-                    <p class="deck">Twelve chart types rendered as styled DOM elements. No SVG, no Canvas, no build step. Ship two files, call one function, and the markup stays inspectable and screen-reader friendly.</p>
+                    <h1>Charts built from plain <b>HTML</b>.<span class="lb"> No SVG. No Canvas.</span></h1>
+                    <p class="deck">Because every bar, slice, and label is a real DOM node, you style Neo Charts with the CSS you already write. No SVG internals, no canvas redraws. Twelve chart types in two files and about 26&nbsp;kB.</p>
                     <div class="cta-row">
                         <a class="btn btn-primary" href="demo/editor.html">
                             Open the editor
@@ -268,9 +296,9 @@
                             <p>No bundler, no framework, no install. Drop in the stylesheet and script, add a container, render.</p>
                         </div>
                         <ul class="points">
+                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Restyle any part with a CSS rule, no chart-specific config API</li>
                             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Works from a plain <code>&lt;script&gt;</code> tag or as a UMD module</li>
                             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Resizes with its container and respects reduced motion</li>
-                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Data ships as real DOM text, so it stays selectable and accessible</li>
                         </ul>
                     </div>
 <pre data-reveal aria-label="Usage example"><span class="c">&lt;!-- 1. include the two files --&gt;</span>
@@ -291,6 +319,72 @@
     }] }
   });
 &lt;/<span class="k">script</span>&gt;</pre>
+                </div>
+            </section>
+
+            <section id="style">
+                <div class="start-grid">
+                    <div data-reveal>
+                        <div class="sec-head" style="margin-bottom:20px">
+                            <h2>Style it like the rest of your page</h2>
+                            <p>The whole library is 12 kB of CSS you can read top to bottom, built on custom properties and predictable class names. Match your brand by overriding a variable, or reach any element with a normal selector.</p>
+                        </div>
+                        <ul class="points">
+                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Theme tokens like <code>--nc-text</code> and <code>--nc-bg</code> retint everything at once</li>
+                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Every part has a stable class: <code>.nc-item</code>, <code>.nc-tooltip</code>, <code>.nc-label</code></li>
+                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Animate, round, or space bars with plain CSS, no re-render needed</li>
+                        </ul>
+                    </div>
+<pre data-reveal aria-label="Styling example"><span class="c">/* Round every bar and give the tooltip your own look. */</span>
+<span class="k">.my-chart</span> .nc-item {
+  border-radius: 8px 8px 0 0;
+}
+<span class="k">.my-chart</span> .nc-tooltip {
+  <span class="k">--nc-tooltip-bg</span>: <span class="s">#0d1117</span>;
+  border: 1px solid <span class="s">#00aeff</span>;
+  border-radius: 12px;
+}
+
+<span class="c">/* Or restyle the whole chart with two variables. */</span>
+<span class="k">.brand-dark</span> .nc-chart {
+  <span class="k">--nc-bg</span>: <span class="s">#0d1117</span>;
+  <span class="k">--nc-text</span>: <span class="s">#eef2f7</span>;
+}</pre>
+                </div>
+            </section>
+
+            <section id="maker">
+                <div class="maker" data-reveal>
+                    <div class="maker-avatar" aria-hidden="true">AG</div>
+                    <h2>The maker</h2>
+                    <p class="maker-bio">Hi, I'm Andy. I design and build things for the web. Neo Charts came out of wanting a charting library small enough to read in one sitting and style with plain CSS, so I built it in the open, the way I'd want to use it.</p>
+                    <div class="maker-meta">
+                        <div class="maker-col">
+                            <span class="maker-label">Working on</span>
+                            <ul>
+                                <li><span class="mk-n">Tenzai</span><span class="mk-r">Design lead</span></li>
+                                <li><span class="mk-n">Snyk</span><span class="mk-r">Developer security</span></li>
+                                <li><span class="mk-n">DeepCode</span><span class="mk-r">AI code review, acquired by Snyk</span></li>
+                            </ul>
+                        </div>
+                        <div class="maker-col">
+                            <span class="maker-label">Also building</span>
+                            <ul>
+                                <li><a href="https://colorforklift.com">ColorForklift</a><span class="mk-r">Color tooling</span></li>
+                                <li><a href="https://iveeo.com">Iveeo</a><span class="mk-r">Built in the open</span></li>
+                                <li><a href="https://github.com/andygongea/neo-charts">Neo Charts</a><span class="mk-r">This library</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="maker-links">
+                        <a class="btn btn-ghost" href="https://www.linkedin.com/in/andygongea/">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 110-4.13 2.06 2.06 0 010 4.13zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z"/></svg>
+                            Connect on LinkedIn
+                        </a>
+                        <div class="maker-tags">
+                            <span>AI design</span><span>devx</span><span>cyberspace</span><span>open source</span>
+                        </div>
+                    </div>
                 </div>
             </section>
         </main>
@@ -329,7 +423,7 @@
                     title: 'Active users',
                     values: [2140, 2680, 2510, 3400, 3980, 4620, 5780],
                     labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                    color: ['#eb453b'],
+                    color: ['#00aeff'],
                     decimals: 0
                 }] }
             });
