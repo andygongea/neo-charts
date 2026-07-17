@@ -31,8 +31,11 @@
             --shadow: 0 1px 2px rgba(0,0,0,.4), 0 18px 40px -18px rgba(0,0,0,.65);
             --radius: 14px;
             --maxw: 1140px;
-            /* Sans display + sans body (same family, weight for hierarchy). No serif, no Inter. */
+            /* Body: neutral grotesk. No serif, no Inter, no external font request. */
             --sans: 'Geist', 'Segoe UI Variable', ui-sans-serif, system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+            /* Display: a bold CONDENSED grotesk for headlines, real character from system faces
+               (Oswald / DIN / Archivo Narrow), no CDN. Falls back to a heavy sans. */
+            --display: 'Oswald', 'DIN Condensed', 'Archivo Narrow', 'Roboto Condensed', 'Helvetica Neue Condensed', 'Arial Narrow', var(--sans);
             --mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
         }
         :root[data-theme="light"] {
@@ -100,8 +103,9 @@
         .hero { display: grid; grid-template-columns: 1.02fr 1fr; gap: 52px; align-items: center; padding: 88px 0 72px; }
         .eyebrow { display: inline-block; font-size: 12.5px; font-weight: 600; letter-spacing: .02em; color: var(--accent-ink); margin-bottom: 22px; }
         .hero h1 {
-            font-weight: 640; font-size: clamp(2.35rem, 1.2rem + 3.2vw, 3.8rem);
-            line-height: 1.05; letter-spacing: -.03em; color: var(--ink); text-wrap: balance;
+            font-family: var(--display); font-weight: 700; text-transform: uppercase;
+            font-size: clamp(2.9rem, 1.4rem + 4.4vw, 5.2rem);
+            line-height: .96; letter-spacing: .002em; color: var(--ink); text-wrap: balance;
         }
         /* Keep the two sentences on their own lines at desktop; collapse to natural flow on mobile. */
         .hero h1 .lb { display: block; }
@@ -128,14 +132,14 @@
         .stats { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
         .stat { padding: 24px 22px; border-right: 1px solid var(--line-soft); }
         .stat:last-child { border-right: 0; }
-        .stat .n { font-size: 2rem; font-weight: 660; letter-spacing: -.03em; color: var(--ink); line-height: 1; }
+        .stat .n { font-family: var(--display); font-size: 2.5rem; font-weight: 700; letter-spacing: 0; color: var(--ink); line-height: .9; }
         .stat .n .u { font-size: 1rem; color: var(--ink-3); margin-left: 1px; font-weight: 600; }
         .stat .l { margin-top: 8px; font-size: 13px; color: var(--ink-3); }
 
         /* ── Sections ────────────────────────────────────────── */
         section { padding: 82px 0; }
         .sec-head { margin-bottom: 38px; }
-        .sec-head h2 { font-size: clamp(1.7rem, 1.1rem + 1.5vw, 2.25rem); font-weight: 640; letter-spacing: -.025em; color: var(--ink); }
+        .sec-head h2 { font-family: var(--display); text-transform: uppercase; font-size: clamp(1.9rem, 1.1rem + 2vw, 2.7rem); font-weight: 700; letter-spacing: .004em; line-height: 1; color: var(--ink); }
         .sec-head p { margin-top: 10px; max-width: 56ch; font-size: 15px; color: var(--ink-2); }
 
         /* Demos as an editorial divided list (not three equal cards). */
@@ -174,7 +178,7 @@
         .maker-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
         .maker-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
         .maker-eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
-        .maker h2 { font-size: clamp(1.5rem, 1.1rem + 1.1vw, 1.9rem); font-weight: 640; line-height: 1.15; letter-spacing: -.02em; color: var(--ink); max-width: 15ch; }
+        .maker h2 { font-family: var(--display); text-transform: uppercase; font-size: clamp(1.7rem, 1.1rem + 1.6vw, 2.3rem); font-weight: 700; line-height: 1.02; letter-spacing: .004em; color: var(--ink); max-width: 13ch; }
         .maker-bio { margin-top: 18px; max-width: 46ch; font-size: 15px; line-height: 1.65; color: var(--ink-2); }
         .maker-linkedin { display: inline-flex; align-items: center; gap: 8px; margin-top: 24px; font-size: 14.5px; font-weight: 600; color: var(--accent-ink); transition: gap .2s; }
         .maker-linkedin:hover { gap: 11px; }
@@ -435,11 +439,11 @@
     <footer>
         <div class="shell">
             <div class="foot">
-                <span>Neo Charts, released under the MIT license.</span>
+                <span>Neo Charts, MIT licensed. Built by <a href="https://gongea.com">Andy Gongea</a>.</span>
                 <span class="links">
                     <a href="https://github.com/andygongea/neo-charts">GitHub</a>
                     <a href="https://github.com/andygongea/neo-charts#readme">Documentation</a>
-                    <a href="https://github.com/andygongea/neo-charts/blob/master/LICENSE">License</a>
+                    <a href="https://gongea.com">gongea.com</a>
                 </span>
             </div>
         </div>
