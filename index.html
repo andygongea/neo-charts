@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Neo Charts — Lightweight HTML/CSS charting</title>
+    <meta name="description" content="Zero-dependency HTML/CSS chart library. No SVG, no Canvas — 12 chart types rendered as styled DOM elements.">
+    <link rel="stylesheet" href="neo-charts.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #111113;
+            --surface: rgba(25,25,27,.9);
+            --surface-hover: rgba(32,32,35,.95);
+            --border: rgba(255,255,255,.08);
+            --border-hover: rgba(0,229,255,.5);
+            --heading: #e4e4e7;
+            --text: #a0a0a6;
+            --muted: rgba(255,255,255,.4);
+            --accent: #00e5ff;
+            --accent-soft: rgba(0,229,255,.12);
+        }
+        body.light {
+            --bg: #ededee;
+            --surface: #ffffff;
+            --surface-hover: #f6f6f7;
+            --border: rgba(0,0,0,.08);
+            --border-hover: #0891b2;
+            --heading: #1c1c1e;
+            --text: #505055;
+            --muted: rgba(0,0,0,.42);
+            --accent: #0891b2;
+            --accent-soft: rgba(8,145,178,.1);
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            transition: background-color .3s, color .3s;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding: 48px 28px 72px; flex: 1; }
+
+        header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+        .brand { display: flex; align-items: center; gap: 16px; }
+        .brand-icon {
+            width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0;
+            background: linear-gradient(135deg, #00e5ff, #7174ff);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 20px rgba(0,229,255,.25);
+        }
+        .brand-icon svg { width: 26px; height: 26px; }
+        .brand h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.6px; color: var(--heading); }
+        .brand p { margin-top: 3px; font-size: 13px; color: var(--muted); }
+
+        .theme-toggle {
+            padding: 9px 16px; border: 1px solid var(--border); border-radius: 9px;
+            font-size: 12px; font-weight: 600; letter-spacing: .4px; color: var(--muted);
+            background: var(--surface); cursor: pointer; transition: border-color .2s, color .2s;
+        }
+        .theme-toggle:hover { border-color: var(--border-hover); color: var(--heading); }
+        .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+        .lede {
+            margin: 40px 0 8px; max-width: 640px;
+            font-size: clamp(22px, 3.2vw, 34px); font-weight: 700; line-height: 1.25;
+            letter-spacing: -0.4px; color: var(--heading);
+        }
+        .lede .hl { color: var(--accent); }
+        .sub { max-width: 620px; font-size: 15px; line-height: 1.6; }
+
+        .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+        .tag {
+            font-size: 11px; font-weight: 600; letter-spacing: .5px; padding: 5px 11px;
+            border-radius: 999px; border: 1px solid var(--border); color: var(--muted);
+            background: var(--surface);
+        }
+        .tag.accent { border-color: transparent; color: var(--accent); background: var(--accent-soft); }
+
+        .demos { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-top: 48px; }
+        .demo-card {
+            display: flex; flex-direction: column; gap: 14px; padding: 26px 24px;
+            border: 1px solid var(--border); border-radius: 16px; background: var(--surface);
+            text-decoration: none; color: inherit; position: relative; overflow: hidden;
+            transition: border-color .2s, background .2s, transform .2s;
+        }
+        .demo-card:hover { border-color: var(--border-hover); background: var(--surface-hover); transform: translateY(-3px); }
+        .demo-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+        .demo-thumb {
+            height: 120px; border-radius: 10px; border: 1px solid var(--border);
+            display: flex; align-items: flex-end; gap: 5px; padding: 14px; overflow: hidden;
+            background: linear-gradient(160deg, rgba(0,229,255,.04), transparent);
+        }
+        .demo-thumb .bar { flex: 1; border-radius: 3px 3px 0 0; opacity: .9; }
+        .demo-thumb .dot { width: 100%; height: 100%; border-radius: 50%;
+            background: conic-gradient(#eb453b 0 30%, #009ab0 30% 55%, #9566f5 55% 78%, #669c00 78% 100%); }
+        .demo-thumb.editor { flex-direction: column; align-items: stretch; justify-content: center; gap: 8px; }
+        .demo-thumb.editor .line { height: 8px; border-radius: 4px; background: var(--border); }
+        .demo-thumb.editor .line.a { width: 70%; background: var(--accent); opacity: .5; }
+        .demo-thumb.editor .line.b { width: 90%; }
+        .demo-thumb.editor .line.c { width: 55%; }
+        .demo-kicker { font-size: 10px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; color: var(--accent); }
+        .demo-card h2 { font-size: 17px; font-weight: 700; color: var(--heading); }
+        .demo-card p { font-size: 13px; line-height: 1.55; color: var(--text); flex: 1; }
+        .demo-go { font-size: 13px; font-weight: 600; color: var(--accent); display: inline-flex; align-items: center; gap: 6px; }
+
+        .install { margin-top: 52px; padding: 24px 26px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+        .install h3 { font-size: 11px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+        pre { margin: 0; padding: 16px 18px; border-radius: 10px; background: rgba(0,0,0,.28); border: 1px solid var(--border);
+            overflow-x: auto; font-family: 'SF Mono', ui-monospace, Menlo, monospace; font-size: 12.5px; line-height: 1.7; color: var(--heading); }
+        body.light pre { background: rgba(0,0,0,.04); }
+        pre .tok { color: var(--accent); }
+
+        footer { border-top: 1px solid var(--border); }
+        .footer-inner { max-width: 1080px; margin: 0 auto; padding: 22px 28px; display: flex; flex-wrap: wrap; gap: 12px;
+            justify-content: space-between; font-size: 12.5px; color: var(--muted); }
+        footer a { color: var(--accent); text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <header>
+            <div class="brand">
+                <span class="brand-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#08252b" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>
+                    </svg>
+                </span>
+                <div>
+                    <h1>Neo Charts</h1>
+                    <p>Zero-dependency HTML/CSS charting</p>
+                </div>
+            </div>
+            <button class="theme-toggle" id="themeBtn" type="button">Light theme</button>
+        </header>
+
+        <main>
+            <p class="lede">12 chart types rendered as styled DOM nodes — <span class="hl">no SVG, no Canvas</span>, no build step.</p>
+            <p class="sub">Ship two files (<code>neo-charts.js</code> + <code>neo-charts.css</code>) and call one function. Responsive, animated, accessible, light &amp; dark themes. Explore the live demos below.</p>
+
+            <div class="tags">
+                <span class="tag accent">Zero dependencies</span>
+                <span class="tag">2 files</span>
+                <span class="tag">Responsive</span>
+                <span class="tag">Accessible</span>
+                <span class="tag">Light &amp; dark</span>
+                <span class="tag">MIT</span>
+            </div>
+
+            <section class="demos" aria-label="Live demos">
+                <a class="demo-card" href="demo/demo1.html">
+                    <div class="demo-thumb" aria-hidden="true">
+                        <span class="bar" style="height:45%;background:#eb453b"></span>
+                        <span class="bar" style="height:70%;background:#009ab0"></span>
+                        <span class="bar" style="height:55%;background:#9566f5"></span>
+                        <span class="bar" style="height:88%;background:#669c00"></span>
+                        <span class="bar" style="height:62%;background:#3d82ff"></span>
+                    </div>
+                    <span class="demo-kicker">Dashboard</span>
+                    <h2>Security Analytics</h2>
+                    <p>A full 25-chart dashboard: columns, bars, lines, gauges, heatmaps, treemaps, and more, in one cohesive layout.</p>
+                    <span class="demo-go">Open dashboard →</span>
+                </a>
+
+                <a class="demo-card" href="demo/demo2.html">
+                    <div class="demo-thumb" aria-hidden="true">
+                        <span class="dot"></span>
+                    </div>
+                    <span class="demo-kicker">Gallery</span>
+                    <h2>Type Gallery</h2>
+                    <p>Every chart type side by side, each shown in its chart, empty, and config states — the quickest way to see what's available.</p>
+                    <span class="demo-go">Browse types →</span>
+                </a>
+
+                <a class="demo-card" href="demo/editor.html">
+                    <div class="demo-thumb editor" aria-hidden="true">
+                        <span class="line a"></span>
+                        <span class="line b"></span>
+                        <span class="line c"></span>
+                    </div>
+                    <span class="demo-kicker">Playground</span>
+                    <h2>Live Editor</h2>
+                    <p>Tweak options and data with live controls, switch chart types instantly, and copy the generated config to paste into your project.</p>
+                    <span class="demo-go">Open editor →</span>
+                </a>
+            </section>
+
+            <section class="install">
+                <h3>Quick start</h3>
+                <pre><span class="tok">&lt;link</span> rel=<span class="tok">"stylesheet"</span> href=<span class="tok">"neo-charts.css"</span><span class="tok">&gt;</span>
+<span class="tok">&lt;script</span> src=<span class="tok">"neo-charts.js"</span><span class="tok">&gt;&lt;/script&gt;</span>
+
+<span class="tok">&lt;div</span> id=<span class="tok">"chart"</span><span class="tok">&gt;&lt;/div&gt;</span>
+<span class="tok">&lt;script&gt;</span>
+  neoCharts(<span class="tok">'#chart'</span>, {
+    type: <span class="tok">'column'</span>,
+    data: { series: [{ title: <span class="tok">'Revenue'</span>, values: [12, 19, 8, 22], labels: [<span class="tok">'Q1'</span>,<span class="tok">'Q2'</span>,<span class="tok">'Q3'</span>,<span class="tok">'Q4'</span>] }] }
+  });
+<span class="tok">&lt;/script&gt;</span></pre>
+            </section>
+        </main>
+    </div>
+
+    <footer>
+        <div class="footer-inner">
+            <span>Neo Charts — MIT licensed.</span>
+            <span><a href="https://github.com/andygongea/neo-charts">View on GitHub</a> · <a href="https://github.com/andygongea/neo-charts#readme">Documentation</a></span>
+        </div>
+    </footer>
+
+    <script>
+        var btn = document.getElementById('themeBtn');
+        // Honor the visitor's OS preference on first load.
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            document.body.classList.add('light');
+        }
+        function syncLabel() {
+            btn.textContent = document.body.classList.contains('light') ? 'Dark theme' : 'Light theme';
+        }
+        syncLabel();
+        btn.addEventListener('click', function () {
+            document.body.classList.toggle('light');
+            syncLabel();
+        });
+    </script>
+</body>
+</html>
