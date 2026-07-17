@@ -417,7 +417,9 @@
             }
             if (t === 'column' || t === 'bar' || t === 'line' || t === 'area') {
                 out.push(rangeCtrl('Guide lines', 'layout.lines.number', 0, 8, 1, 4));
-                out.push(selectCtrl('Lines align', 'layout.lines.align', ['left','right']));
+            }
+            if (t === 'progress') {
+                out.push(toggleCtrl('Fit to container', 'fit', false));
             }
             if (t === 'line' || t === 'area') {
                 out.push(toggleCtrl('Smooth curve', 'smooth', false));
@@ -466,7 +468,6 @@
             g3.appendChild(settingToggle('Legend', 'legend', true));
             g3.appendChild(settingToggle('Animate', 'animate', true));
             g3.appendChild(settingToggle('Highlight on hover', 'highlight', false));
-            g3.appendChild(settingToggle('Fit to container', 'fit', false));
             host.appendChild(g3);
 
             // — Group 4: per-type —
