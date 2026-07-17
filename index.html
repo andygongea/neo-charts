@@ -167,24 +167,44 @@
         pre .s { color: #9bbd6a; }
         :root[data-theme="light"] pre .s { color: #5a7d2e; }
 
-        /* Maker section (centered card, modeled on the iveeo.com maker block) */
-        #maker { padding-top: 40px; }
-        .maker { max-width: 720px; margin: 0 auto; text-align: center; padding: 44px 36px; border: 1px solid var(--line); border-radius: 20px; background: var(--bg-raised); box-shadow: var(--shadow); }
-        .maker-avatar { width: 68px; height: 68px; margin: 0 auto 20px; border-radius: 50%; display: grid; place-items: center; font-size: 22px; font-weight: 660; letter-spacing: .01em; color: #fff; background: linear-gradient(150deg, var(--accent), color-mix(in srgb, var(--accent) 60%, #0a3a56)); box-shadow: 0 4px 18px -4px color-mix(in srgb, var(--accent) 55%, transparent); }
-        .maker h2 { font-size: 1.4rem; font-weight: 640; letter-spacing: -.02em; color: var(--ink); }
-        .maker-bio { max-width: 52ch; margin: 12px auto 0; font-size: 15px; line-height: 1.65; color: var(--ink-2); }
-        .maker-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 30px auto 4px; text-align: left; }
-        .maker-col { border: 1px solid var(--line-soft); border-radius: 12px; padding: 16px 18px; }
-        .maker-label { display: block; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 12px; }
-        .maker-col ul { list-style: none; display: flex; flex-direction: column; gap: 11px; }
-        .maker-col li { display: flex; flex-direction: column; gap: 2px; font-size: 14px; }
-        .maker-col .mk-n, .maker-col a { color: var(--ink); font-weight: 600; }
-        .maker-col a { transition: color .18s; }
-        .maker-col a:hover { color: var(--accent-ink); }
-        .maker-col .mk-r { font-size: 12.5px; color: var(--ink-3); }
-        .maker-links { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 14px; margin-top: 26px; }
-        .maker-tags { display: flex; flex-wrap: wrap; gap: 7px; }
-        .maker-tags span { font-size: 12px; color: var(--ink-3); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; }
+        /* Maker section (asymmetric: bio left, career timeline right, no card box) */
+        .maker { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; }
+        .maker-id { display: flex; align-items: center; gap: 16px; margin-bottom: 26px; }
+        .maker-avatar { position: relative; width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center; overflow: hidden; font-size: 16px; font-weight: 660; color: #fff; background: linear-gradient(150deg, var(--accent), color-mix(in srgb, var(--accent) 55%, #0a3a56)); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent); }
+        .maker-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        .maker-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+        .maker-eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+        .maker h2 { font-size: clamp(1.5rem, 1.1rem + 1.1vw, 1.9rem); font-weight: 640; line-height: 1.15; letter-spacing: -.02em; color: var(--ink); max-width: 15ch; }
+        .maker-bio { margin-top: 18px; max-width: 46ch; font-size: 15px; line-height: 1.65; color: var(--ink-2); }
+        .maker-linkedin { display: inline-flex; align-items: center; gap: 8px; margin-top: 24px; font-size: 14.5px; font-weight: 600; color: var(--accent-ink); transition: gap .2s; }
+        .maker-linkedin:hover { gap: 11px; }
+        .maker-linkedin > svg:first-child { width: 17px; height: 17px; }
+        .maker-linkedin .ext { width: 14px; height: 14px; }
+        .maker-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+        .maker-tags span { font-size: 12.5px; color: var(--ink-2); border: 1px solid var(--line); border-radius: 999px; padding: 5px 13px; }
+
+        .timeline { list-style: none; position: relative; padding-left: 4px; }
+        .tl-item { position: relative; display: grid; grid-template-columns: 44px 1fr; gap: 18px; padding: 0 0 26px 26px; }
+        .tl-item:last-child { padding-bottom: 0; }
+        /* Vertical connector line running through the node dots. */
+        .tl-item::before { content: ""; position: absolute; left: 0; top: 6px; bottom: -6px; width: 1px; background: var(--line); }
+        .tl-item:last-child::before { display: none; }
+        .tl-item::after { content: ""; position: absolute; left: -3px; top: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--ink-3); box-shadow: 0 0 0 3px var(--bg); }
+        .tl-item.is-now::after { background: var(--accent); box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px color-mix(in srgb, var(--accent) 20%, transparent); }
+        .tl-logo { width: 44px; height: 44px; border-radius: 11px; border: 1px solid var(--line); background: var(--bg-raised); display: grid; place-items: center; }
+        .tl-logo svg { width: 22px; height: 22px; }
+        .tl-logo.mono { font-size: 13px; font-weight: 700; letter-spacing: -.01em; color: var(--ink); text-transform: lowercase; }
+        .tl-body { display: flex; flex-direction: column; gap: 3px; padding-top: 3px; }
+        .tl-name { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 640; color: var(--ink); }
+        .tl-now { font-size: 10.5px; font-weight: 600; letter-spacing: .04em; color: var(--accent-ink); border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent); border-radius: 5px; padding: 2px 7px; text-transform: none; }
+        .tl-role { font-size: 13.5px; color: var(--ink-3); }
+        .also { margin-top: 30px; padding-top: 24px; border-top: 1px solid var(--line-soft); }
+        .also-label { display: block; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 14px; }
+        .also-links { display: flex; flex-wrap: wrap; gap: 22px; }
+        .also-links a { display: inline-flex; align-items: center; gap: 5px; font-size: 15px; font-weight: 620; color: var(--ink); transition: color .18s; }
+        .also-links a:hover { color: var(--accent-ink); }
+        .also-links a svg { width: 13px; height: 13px; color: var(--ink-3); }
+        .also-links a:hover svg { color: var(--accent-ink); }
 
         /* Footer */
         footer { border-top: 1px solid var(--line-soft); }
@@ -201,8 +221,7 @@
             .stat:nth-child(1), .stat:nth-child(2) { border-bottom: 1px solid var(--line-soft); }
             .demo-row { grid-template-columns: 1fr; gap: 12px; }
             .demo-row .go { margin-top: 2px; }
-            .maker-meta { grid-template-columns: 1fr; }
-            .maker { padding: 36px 22px; }
+            .maker { grid-template-columns: 1fr; gap: 44px; }
             .topnav .nav-link { display: none; }
         }
     </style>
@@ -354,35 +373,58 @@
             </section>
 
             <section id="maker">
-                <div class="maker" data-reveal>
-                    <div class="maker-avatar" aria-hidden="true">AG</div>
-                    <h2>The maker</h2>
-                    <p class="maker-bio">Hi, I'm Andy. I design and build things for the web. Neo Charts came out of wanting a charting library small enough to read in one sitting and style with plain CSS, so I built it in the open, the way I'd want to use it.</p>
-                    <div class="maker-meta">
-                        <div class="maker-col">
-                            <span class="maker-label">Working on</span>
-                            <ul>
-                                <li><span class="mk-n">Tenzai</span><span class="mk-r">Design lead</span></li>
-                                <li><span class="mk-n">Snyk</span><span class="mk-r">Developer security</span></li>
-                                <li><span class="mk-n">DeepCode</span><span class="mk-r">AI code review, acquired by Snyk</span></li>
-                            </ul>
+                <div class="maker">
+                    <div class="maker-left" data-reveal>
+                        <div class="maker-id">
+                            <span class="maker-avatar" aria-hidden="true">AG<img src="assets/andy.jpg" alt="" width="52" height="52" loading="lazy" onerror="this.remove()"></span>
+                            <span class="maker-eyebrow"><span class="dot"></span>The maker</span>
                         </div>
-                        <div class="maker-col">
-                            <span class="maker-label">Also building</span>
-                            <ul>
-                                <li><a href="https://colorforklift.com">ColorForklift</a><span class="mk-r">Color tooling</span></li>
-                                <li><a href="https://iveeo.com">Iveeo</a><span class="mk-r">Built in the open</span></li>
-                                <li><a href="https://github.com/andygongea/neo-charts">Neo Charts</a><span class="mk-r">This library</span></li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="maker-links">
-                        <a class="btn btn-ghost" href="https://www.linkedin.com/in/andygongea/">
-                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 110-4.13 2.06 2.06 0 010 4.13zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z"/></svg>
+                        <h2>Hi, I'm Andy. I design and build things for the web.</h2>
+                        <p class="maker-bio">I'm a designer who codes, and I can't help sweating the small details most people skip past. Neo Charts is what happens when I point that at a problem of my own: a charting library small enough to read in one sitting, built in the open, the way I'd want to use it.</p>
+                        <a class="maker-linkedin" href="https://www.linkedin.com/in/andygongea/">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 110-4.13 2.06 2.06 0 010 4.13zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z"/></svg>
                             Connect on LinkedIn
+                            <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>
                         </a>
                         <div class="maker-tags">
-                            <span>AI design</span><span>devx</span><span>cyberspace</span><span>open source</span>
+                            <span>AI</span><span>design</span><span>devx</span><span>cyberspace</span><span>open source</span>
+                        </div>
+                    </div>
+
+                    <div class="maker-right" data-reveal>
+                        <ol class="timeline">
+                            <li class="tl-item is-now">
+                                <span class="tl-logo" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M2 12h20M4.9 4.9l14.2 14.2M19.1 4.9L4.9 19.1"/></svg>
+                                </span>
+                                <span class="tl-body">
+                                    <span class="tl-name">Tenzai <span class="tl-now">Now</span></span>
+                                    <span class="tl-role">Leading the design effort</span>
+                                </span>
+                            </li>
+                            <li class="tl-item">
+                                <span class="tl-logo mono" aria-hidden="true">snyk</span>
+                                <span class="tl-body">
+                                    <span class="tl-name">Snyk</span>
+                                    <span class="tl-role">Developer-first security</span>
+                                </span>
+                            </li>
+                            <li class="tl-item">
+                                <span class="tl-logo mono" aria-hidden="true">DC</span>
+                                <span class="tl-body">
+                                    <span class="tl-name">DeepCode</span>
+                                    <span class="tl-role">AI code review (acquired by Snyk)</span>
+                                </span>
+                            </li>
+                        </ol>
+
+                        <div class="also">
+                            <span class="also-label">Also building</span>
+                            <div class="also-links">
+                                <a href="https://colorforklift.com">ColorForklift <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
+                                <a href="https://github.com/andygongea/update-now">Update Now <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
+                                <a href="https://github.com/andygongea/neo-charts">Neo Charts <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
+                            </div>
                         </div>
                     </div>
                 </div>
