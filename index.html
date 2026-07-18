@@ -63,12 +63,13 @@
             --shadow: 0 1px 2px rgba(0,0,0,.05), 0 18px 44px -22px rgba(20,40,70,.28);
         }
 
-        html { scroll-behavior: smooth; }
+        /* 10px root baseline (62.5% of the 16px default) so 1rem = 10px and rem math stays clean. */
+        html { font-size: 62.5%; scroll-behavior: smooth; }
         body {
             background: var(--bg);
             color: var(--ink-2);
             font-family: var(--sans);
-            font-size: 16px;
+            font-size: 1.6rem; /* 16px */
             line-height: 1.6;
             font-feature-settings: 'cv01', 'ss01';
             -webkit-font-smoothing: antialiased;
@@ -95,10 +96,10 @@
 
         /* ── Top bar ─────────────────────────────────────────── */
         .topbar { display: flex; align-items: center; justify-content: space-between; height: 68px; border-bottom: 1px solid var(--line-soft); }
-        .wordmark { display: flex; align-items: center; gap: 11px; font-weight: 600; font-size: 15.5px; color: var(--ink); letter-spacing: -.01em; }
+        .wordmark { display: flex; align-items: center; gap: 11px; font-weight: 600; font-size: 1.55rem; color: var(--ink); letter-spacing: -.01em; }
         .wordmark .mark { width: 26px; height: 26px; border-radius: 7px; background: var(--accent); display: grid; place-items: center; flex-shrink: 0; box-shadow: 0 3px 12px -3px color-mix(in srgb, var(--accent) 60%, transparent); }
         .wordmark .mark svg { width: 15px; height: 15px; }
-        .topnav { display: flex; align-items: center; gap: 24px; font-size: 14px; }
+        .topnav { display: flex; align-items: center; gap: 24px; font-size: 1.4rem; }
         .topnav a { color: var(--ink-3); transition: color .18s; }
         .topnav a:hover { color: var(--ink); }
         .theme-btn { width: 34px; height: 34px; border: 1px solid var(--line); border-radius: 9px; background: transparent; color: var(--ink-2); cursor: pointer; display: grid; place-items: center; transition: border-color .18s, color .18s; }
@@ -111,18 +112,18 @@
 
         /* ── Hero (full-width title, then the live chart, then description + CTAs) ── */
         .hero { padding: 72px 0 60px; }
-        .eyebrow { display: inline-block; font-size: 12.5px; font-weight: 600; letter-spacing: .02em; color: var(--accent-ink); margin-bottom: 18px; }
+        .eyebrow { display: inline-block; font-size: 1.25rem; font-weight: 600; letter-spacing: .02em; color: var(--accent-ink); margin-bottom: 18px; }
         .hero h1 {
             font-family: var(--display); font-weight: 700;
-            font-size: clamp(2.5rem, 1.1rem + 4.4vw, 5rem);
+            font-size: clamp(4rem, 1.76rem + 4.4vw, 8rem);
             line-height: 1.01; letter-spacing: -.01em; color: var(--ink); text-wrap: balance;
         }
         .hero h1 b { color: var(--accent-ink); font-weight: 700; }
         /* Description + CTAs sit below the chart, deck left, buttons right. */
         .hero-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px 40px; margin-top: 28px; }
-        .hero .deck { max-width: 60ch; font-size: 1.05rem; line-height: 1.6; color: var(--ink-2); }
+        .hero .deck { max-width: 60ch; font-size: 1.68rem; line-height: 1.6; color: var(--ink-2); }
         .cta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 13px; flex-shrink: 0; }
-        .btn { display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 22px; border-radius: 11px; font-size: 14.5px; font-weight: 600; letter-spacing: -.005em; transition: transform .14s, background .2s, border-color .2s, color .2s; }
+        .btn { display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 22px; border-radius: 11px; font-size: 1.45rem; font-weight: 600; letter-spacing: -.005em; transition: transform .14s, background .2s, border-color .2s, color .2s; }
         .btn:active { transform: translateY(1px); }
         .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
         .btn-primary { background: var(--accent-btn); color: #fff; }
@@ -136,7 +137,7 @@
         .hero-visual::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(90% 120% at 100% 0%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 60%); }
         /* Type toggle sits BELOW the chart in its own toolbar. */
         .preview-toolbar { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; padding: 14px 16px; border-top: 1px solid var(--line-soft); }
-        .preview-hint { font-size: 12.5px; color: var(--ink-3); }
+        .preview-hint { font-size: 1.25rem; color: var(--ink-3); }
         .type-toggle { display: flex; flex-wrap: wrap; gap: 3px; padding: 3px; border: 1px solid var(--line); border-radius: 10px; background: color-mix(in srgb, var(--bg) 60%, transparent); }
         .type-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 30px; padding: 0; border: 1px solid transparent; border-radius: 7px; color: var(--ink-3); background: transparent; cursor: pointer; transition: color .15s, background .15s, border-color .15s; }
         .type-btn svg { width: 17px; height: 17px; display: block; }
@@ -153,15 +154,15 @@
         .stats { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
         .stat { padding: 24px 22px; border-right: 1px solid var(--line-soft); }
         .stat:last-child { border-right: 0; }
-        .stat .n { font-family: var(--display); font-size: 2.3rem; font-weight: 700; letter-spacing: -.02em; color: var(--ink); line-height: 1; }
-        .stat .n .u { font-size: 1rem; color: var(--ink-3); margin-left: 1px; font-weight: 600; }
-        .stat .l { margin-top: 8px; font-size: 13px; color: var(--ink-3); }
+        .stat .n { font-family: var(--display); font-size: 3.68rem; font-weight: 700; letter-spacing: -.02em; color: var(--ink); line-height: 1; }
+        .stat .n .u { font-size: 1.6rem; color: var(--ink-3); margin-left: 1px; font-weight: 600; }
+        .stat .l { margin-top: 8px; font-size: 1.3rem; color: var(--ink-3); }
 
         /* ── Sections ────────────────────────────────────────── */
         section { padding: 82px 0; }
         .sec-head { margin-bottom: 38px; }
-        .sec-head h2 { font-family: var(--display); font-size: clamp(1.6rem, 1.05rem + 1.6vw, 2.3rem); font-weight: 700; letter-spacing: -.01em; line-height: 1.08; color: var(--ink); }
-        .sec-head p { margin-top: 10px; max-width: 56ch; font-size: 15px; color: var(--ink-2); }
+        .sec-head h2 { font-family: var(--display); font-size: clamp(2.56rem, 1.68rem + 1.6vw, 3.68rem); font-weight: 700; letter-spacing: -.01em; line-height: 1.08; color: var(--ink); }
+        .sec-head p { margin-top: 10px; max-width: 56ch; font-size: 1.5rem; color: var(--ink-2); }
 
         /* Demos as an editorial divided list (not three equal cards). */
         .demo-list { border-top: 1px solid var(--line-soft); }
@@ -173,20 +174,20 @@
         .demo-row:hover { background: var(--bg-raised); padding-left: 22px; }
         .demo-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
         .demo-row .head { display: flex; align-items: center; gap: 12px; }
-        .demo-row h3 { font-size: 1.28rem; font-weight: 620; letter-spacing: -.02em; color: var(--ink); }
-        .demo-row .kind { font-family: var(--mono); font-size: 10.5px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--accent-ink); padding: 3px 8px; border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent); border-radius: 5px; }
-        .demo-row p { margin-top: 9px; max-width: 64ch; font-size: 14.5px; color: var(--ink-2); }
-        .demo-row .go { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--ink-3); white-space: nowrap; transition: color .2s, gap .2s; }
+        .demo-row h3 { font-size: 2.048rem; font-weight: 620; letter-spacing: -.02em; color: var(--ink); }
+        .demo-row .kind { font-family: var(--mono); font-size: 1.05rem; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--accent-ink); padding: 3px 8px; border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent); border-radius: 5px; }
+        .demo-row p { margin-top: 9px; max-width: 64ch; font-size: 1.45rem; color: var(--ink-2); }
+        .demo-row .go { display: inline-flex; align-items: center; gap: 8px; font-size: 1.4rem; font-weight: 600; color: var(--ink-3); white-space: nowrap; transition: color .2s, gap .2s; }
         .demo-row:hover .go { color: var(--accent-ink); gap: 12px; }
         .demo-row .go svg { width: 15px; height: 15px; }
 
         /* Quick start */
         .start-grid { display: grid; grid-template-columns: .82fr 1.18fr; gap: 42px; align-items: start; }
         .points { margin-top: 22px; display: flex; flex-direction: column; gap: 13px; list-style: none; }
-        .points li { display: flex; align-items: flex-start; gap: 12px; font-size: 14.5px; line-height: 1.55; color: var(--ink-2); }
+        .points li { display: flex; align-items: flex-start; gap: 12px; font-size: 1.45rem; line-height: 1.55; color: var(--ink-2); }
         .points svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 3px; color: var(--accent); }
         .points code { display: inline; color: var(--accent-ink); background: color-mix(in srgb, var(--accent) 12%, transparent); padding: .05em .4em; border-radius: 5px; font-size: .92em; white-space: nowrap; }
-        pre { font-family: var(--mono); font-size: 13px; line-height: 1.75; background: var(--bg-raised); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px 24px; overflow-x: auto; color: var(--ink); box-shadow: var(--shadow); }
+        pre { font-family: var(--mono); font-size: 1.3rem; line-height: 1.75; background: var(--bg-raised); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px 24px; overflow-x: auto; color: var(--ink); box-shadow: var(--shadow); }
         pre .c { color: var(--ink-3); }
         pre .k { color: var(--accent-ink); }
         pre .s { color: #9bbd6a; }
@@ -195,18 +196,18 @@
         /* Maker section (asymmetric: bio left, career timeline right, no card box) */
         .maker { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; }
         .maker-id { display: flex; align-items: center; gap: 16px; margin-bottom: 26px; }
-        .maker-avatar { position: relative; width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center; overflow: hidden; font-size: 16px; font-weight: 660; color: #fff; background: linear-gradient(150deg, var(--accent), color-mix(in srgb, var(--accent) 55%, #0a3a56)); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent); }
+        .maker-avatar { position: relative; width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center; overflow: hidden; font-size: 1.6rem; font-weight: 660; color: #fff; background: linear-gradient(150deg, var(--accent), color-mix(in srgb, var(--accent) 55%, #0a3a56)); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent); }
         .maker-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-        .maker-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+        .maker-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 1.2rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
         .maker-eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
-        .maker h2 { font-family: var(--display); font-size: clamp(1.45rem, 1.05rem + 1.3vw, 1.95rem); font-weight: 700; line-height: 1.12; letter-spacing: -.01em; color: var(--ink); max-width: 15ch; }
-        .maker-bio { margin-top: 18px; max-width: 46ch; font-size: 15px; line-height: 1.65; color: var(--ink-2); }
-        .maker-linkedin { display: inline-flex; align-items: center; gap: 8px; margin-top: 24px; font-size: 14.5px; font-weight: 600; color: var(--accent-ink); transition: gap .2s; }
+        .maker h2 { font-family: var(--display); font-size: clamp(2.32rem, 1.68rem + 1.3vw, 3.12rem); font-weight: 700; line-height: 1.12; letter-spacing: -.01em; color: var(--ink); max-width: 15ch; }
+        .maker-bio { margin-top: 18px; max-width: 46ch; font-size: 1.5rem; line-height: 1.65; color: var(--ink-2); }
+        .maker-linkedin { display: inline-flex; align-items: center; gap: 8px; margin-top: 24px; font-size: 1.45rem; font-weight: 600; color: var(--accent-ink); transition: gap .2s; }
         .maker-linkedin:hover { gap: 11px; }
         .maker-linkedin > svg:first-child { width: 17px; height: 17px; }
         .maker-linkedin .ext { width: 14px; height: 14px; }
         .maker-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
-        .maker-tags span { font-size: 12.5px; color: var(--ink-2); border: 1px solid var(--line); border-radius: 999px; padding: 5px 13px; }
+        .maker-tags span { font-size: 1.25rem; color: var(--ink-2); border: 1px solid var(--line); border-radius: 999px; padding: 5px 13px; }
 
         .timeline { list-style: none; position: relative; padding-left: 4px; }
         .tl-item { position: relative; display: grid; grid-template-columns: 44px 1fr; gap: 18px; padding: 0 0 26px 26px; }
@@ -220,22 +221,22 @@
         .tl-logo svg { width: 24px; height: 24px; }
         .tl-logo.tl-logo-wide { color: var(--ink); }
         .tl-logo.tl-logo-wide svg { width: 30px; height: auto; }
-        .tl-logo.mono { font-size: 13px; font-weight: 700; letter-spacing: -.01em; color: var(--ink); text-transform: lowercase; }
+        .tl-logo.mono { font-size: 1.3rem; font-weight: 700; letter-spacing: -.01em; color: var(--ink); text-transform: lowercase; }
         .tl-body { display: flex; flex-direction: column; gap: 3px; padding-top: 3px; }
-        .tl-name { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 640; color: var(--ink); }
-        .tl-now { font-size: 10.5px; font-weight: 600; letter-spacing: .04em; color: var(--accent-ink); border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent); border-radius: 5px; padding: 2px 7px; text-transform: none; }
-        .tl-role { font-size: 13.5px; color: var(--ink-3); }
+        .tl-name { display: inline-flex; align-items: center; gap: 8px; font-size: 1.5rem; font-weight: 640; color: var(--ink); }
+        .tl-now { font-size: 1.05rem; font-weight: 600; letter-spacing: .04em; color: var(--accent-ink); border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent); border-radius: 5px; padding: 2px 7px; text-transform: none; }
+        .tl-role { font-size: 1.35rem; color: var(--ink-3); }
         .also { margin-top: 30px; padding-top: 24px; border-top: 1px solid var(--line-soft); }
-        .also-label { display: block; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 14px; }
+        .also-label { display: block; font-size: 1.1rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 14px; }
         .also-links { display: flex; flex-wrap: wrap; gap: 22px; }
-        .also-links a { display: inline-flex; align-items: center; gap: 5px; font-size: 15px; font-weight: 620; color: var(--ink); transition: color .18s; }
+        .also-links a { display: inline-flex; align-items: center; gap: 5px; font-size: 1.5rem; font-weight: 620; color: var(--ink); transition: color .18s; }
         .also-links a:hover { color: var(--accent-ink); }
         .also-links a svg { width: 13px; height: 13px; color: var(--ink-3); }
         .also-links a:hover svg { color: var(--accent-ink); }
 
         /* Footer */
         footer { border-top: 1px solid var(--line-soft); }
-        .foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 28px 0 40px; font-size: 13.5px; color: var(--ink-3); }
+        .foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 28px 0 40px; font-size: 1.35rem; color: var(--ink-3); }
         .foot a { color: var(--ink-2); transition: color .18s; }
         .foot a:hover { color: var(--ink); }
         .foot .links { display: flex; gap: 22px; }
