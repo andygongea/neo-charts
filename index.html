@@ -109,20 +109,19 @@
         :root[data-theme="light"] .theme-btn .sun { display: none; }
         :root[data-theme="light"] .theme-btn .moon { display: block; }
 
-        /* ── Hero (full-width: title on top, live interactive chart below) ── */
+        /* ── Hero (full-width title, then the live chart, then description + CTAs) ── */
         .hero { padding: 72px 0 60px; }
-        .hero-head { display: grid; grid-template-columns: 1.35fr 1fr; gap: 20px 56px; align-items: end; }
-        .hero-head .eyebrow-wrap { grid-column: 1 / -1; }
-        .eyebrow { display: inline-block; font-size: 12.5px; font-weight: 600; letter-spacing: .02em; color: var(--accent-ink); }
+        .eyebrow { display: inline-block; font-size: 12.5px; font-weight: 600; letter-spacing: .02em; color: var(--accent-ink); margin-bottom: 18px; }
         .hero h1 {
             font-family: var(--display); font-weight: 700;
-            font-size: clamp(2.3rem, 1rem + 3.9vw, 4.4rem);
-            line-height: 1.03; letter-spacing: -.01em; color: var(--ink); text-wrap: balance;
+            font-size: clamp(2.5rem, 1.1rem + 4.4vw, 5rem);
+            line-height: 1.01; letter-spacing: -.01em; color: var(--ink); text-wrap: balance;
         }
         .hero h1 b { color: var(--accent-ink); font-weight: 700; }
-        .hero-aside { padding-bottom: 6px; }
-        .hero .deck { max-width: 48ch; font-size: 1.05rem; line-height: 1.6; color: var(--ink-2); }
-        .cta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 13px; margin-top: 28px; }
+        /* Description + CTAs sit below the chart, deck left, buttons right. */
+        .hero-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px 40px; margin-top: 28px; }
+        .hero .deck { max-width: 60ch; font-size: 1.05rem; line-height: 1.6; color: var(--ink-2); }
+        .cta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 13px; flex-shrink: 0; }
         .btn { display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 22px; border-radius: 11px; font-size: 14.5px; font-weight: 600; letter-spacing: -.005em; transition: transform .14s, background .2s, border-color .2s, color .2s; }
         .btn:active { transform: translateY(1px); }
         .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
@@ -145,7 +144,10 @@
         .type-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
         .type-btn.is-active { color: #fff; background: var(--accent-btn); border-color: var(--accent-btn); }
         .chart-mount { position: relative; z-index: 1; height: clamp(320px, 42vw, 460px); display: flex; padding: 18px 20px 10px; }
-        .chart-mount > div { flex: 1; min-width: 0; }
+        /* The chart must fill the mount so proportional types (pie/gauge) get a definite height for
+           their aspect-ratio ring. Mirrors the editor's preview-host > chart-mount > .nc-chart rule. */
+        .chart-mount > div { display: flex; flex: 1; min-width: 0; min-height: 0; }
+        .chart-mount > div > .nc-chart { flex: 1; min-height: 0; }
 
         /* ── Stat strip ──────────────────────────────────────── */
         .stats { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
@@ -240,7 +242,7 @@
 
         @media (max-width: 860px) {
             .hero { padding: 48px 0 44px; }
-            .hero-head { grid-template-columns: 1fr; gap: 20px; align-items: start; }
+            .hero-foot { align-items: flex-start; }
             .chart-mount { height: clamp(280px, 60vw, 380px); padding: 14px 12px 6px; }
             .start-grid { grid-template-columns: 1fr; gap: 26px; }
             .stats { grid-template-columns: repeat(2, 1fr); }
@@ -277,21 +279,8 @@
         <main>
             <section class="hero">
                 <div class="hero-head" data-reveal>
-                    <div class="eyebrow-wrap"><span class="eyebrow">Zero dependencies, MIT licensed</span></div>
+                    <span class="eyebrow">Zero dependencies, MIT licensed</span>
                     <h1>Charts built from plain <b>HTML</b>. No SVG. No Canvas.</h1>
-                    <div class="hero-aside">
-                        <p class="deck">Because every bar, slice, and label is a real DOM node, you style Neo Charts with the CSS you already write. No SVG internals, no canvas redraws. Twelve types, two files, about 26&nbsp;kB.</p>
-                        <div class="cta-row">
-                            <a class="btn btn-primary" href="demo/editor.html">
-                                Open the editor
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-                            </a>
-                            <a class="btn btn-ghost" href="https://github.com/andygongea/neo-charts">
-                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.1-1.47-1.1-1.47-.9-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.5 9.5 0 015 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0012 2z"/></svg>
-                                Star on GitHub
-                            </a>
-                        </div>
-                    </div>
                 </div>
 
                 <div class="hero-visual" data-reveal>
@@ -301,6 +290,20 @@
                         <span class="preview-hint">Pick a type to see it render live</span>
                     </div>
                     <div class="chart-mount"><div id="hero-chart" role="img" aria-label="Live chart preview"></div></div>
+                </div>
+
+                <div class="hero-foot" data-reveal>
+                    <p class="deck">Because every bar, slice, and label is a real DOM node, you style Neo Charts with the CSS you already write. No SVG internals, no canvas redraws. Twelve chart types, two files, about 26&nbsp;kB.</p>
+                    <div class="cta-row">
+                        <a class="btn btn-primary" href="demo/editor.html">
+                            Open the editor
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                        </a>
+                        <a class="btn btn-ghost" href="https://github.com/andygongea/neo-charts">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.1-1.47-1.1-1.47-.9-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.5 9.5 0 015 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0012 2z"/></svg>
+                            Star on GitHub
+                        </a>
+                    </div>
                 </div>
             </section>
 
