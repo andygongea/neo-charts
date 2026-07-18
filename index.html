@@ -134,8 +134,8 @@
         /* Full-width live chart panel with a type-toggle header (ported from the editor preview). */
         .hero-visual { position: relative; margin-top: 40px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-raised); box-shadow: var(--shadow); overflow: hidden; }
         .hero-visual::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(90% 120% at 100% 0%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 60%); }
-        .preview-bar { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding: 14px 16px; border-bottom: 1px solid var(--line-soft); }
-        .preview-title { font-family: var(--display); font-size: 15px; font-weight: 700; letter-spacing: -.01em; color: var(--ink); }
+        /* Type toggle sits BELOW the chart in its own toolbar. */
+        .preview-toolbar { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; padding: 14px 16px; border-top: 1px solid var(--line-soft); }
         .preview-hint { font-size: 12.5px; color: var(--ink-3); }
         .type-toggle { display: flex; flex-wrap: wrap; gap: 3px; padding: 3px; border: 1px solid var(--line); border-radius: 10px; background: color-mix(in srgb, var(--bg) 60%, transparent); }
         .type-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 30px; padding: 0; border: 1px solid transparent; border-radius: 7px; color: var(--ink-3); background: transparent; cursor: pointer; transition: color .15s, background .15s, border-color .15s; }
@@ -143,7 +143,7 @@
         .type-btn:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 8%, transparent); }
         .type-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
         .type-btn.is-active { color: #fff; background: var(--accent-btn); border-color: var(--accent-btn); }
-        .chart-mount { position: relative; z-index: 1; height: clamp(320px, 42vw, 460px); display: flex; padding: 18px 20px 10px; }
+        .chart-mount { position: relative; z-index: 1; height: clamp(320px, 42vw, 460px); display: flex; padding: 20px 20px 12px; }
         /* The chart must fill the mount so proportional types (pie/gauge) get a definite height for
            their aspect-ratio ring. Mirrors the editor's preview-host > chart-mount > .nc-chart rule. */
         .chart-mount > div { display: flex; flex: 1; min-width: 0; min-height: 0; }
@@ -284,12 +284,11 @@
                 </div>
 
                 <div class="hero-visual" data-reveal>
-                    <div class="preview-bar">
-                        <span class="preview-title" id="preview-title">Column</span>
+                    <div class="chart-mount"><div id="hero-chart" role="img" aria-label="Live chart preview"></div></div>
+                    <div class="preview-toolbar">
                         <div class="type-toggle" id="typeToggle" role="radiogroup" aria-label="Chart type"></div>
                         <span class="preview-hint">Pick a type to see it render live</span>
                     </div>
-                    <div class="chart-mount"><div id="hero-chart" role="img" aria-label="Live chart preview"></div></div>
                 </div>
 
                 <div class="hero-foot" data-reveal>
@@ -543,8 +542,6 @@
                 data: { series: seriesFor(currentType) }
             };
             heroChart = neoCharts('#hero-chart', cfg);
-            var titleEl = document.getElementById('preview-title');
-            if (titleEl) titleEl.textContent = typeLabel(currentType);
             var btns = document.querySelectorAll('#typeToggle .type-btn');
             for (var i = 0; i < btns.length; i++) {
                 var on = btns[i].getAttribute('data-type') === currentType;
