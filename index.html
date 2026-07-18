@@ -110,18 +110,19 @@
         :root[data-theme="light"] .theme-btn .sun { display: none; }
         :root[data-theme="light"] .theme-btn .moon { display: block; }
 
-        /* ── Hero (full-width title, then the live chart, then description + CTAs) ── */
+        /* ── Hero (centered title, then the live chart + stats, then description + CTAs) ── */
         .hero { padding: 72px 0 60px; }
+        .hero-head { text-align: center; }
         .eyebrow { display: inline-block; font-size: 1.2rem; font-weight: 600; letter-spacing: .02em; color: var(--accent-ink); margin-bottom: 18px; }
         .hero h1 {
             font-family: var(--display); font-weight: 700;
-            font-size: clamp(3.4rem, 1.6rem + 3.6vw, 6rem);
-            line-height: 1.01; letter-spacing: -.01em; color: var(--ink); text-wrap: balance;
+            font-size: clamp(2.8rem, 1.4rem + 2.6vw, 4rem);
+            line-height: 1.05; letter-spacing: -.01em; color: var(--ink); text-wrap: balance;
         }
         .hero h1 b { color: var(--accent-ink); font-weight: 700; }
-        /* Description on top, CTAs centered below it, all centered under the chart. */
-        .hero-foot { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 24px; margin-top: 32px; }
-        .hero .deck { max-width: 62ch; font-size: 1.7rem; line-height: 1.6; color: var(--ink-2); }
+        /* Description on top, CTAs centered below it, generously spaced under the stats. */
+        .hero-foot { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 32px; margin-top: 56px; }
+        .hero .deck { max-width: 62ch; font-size: 1.7rem; line-height: 1.65; color: var(--ink-2); }
         .cta-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 13px; }
         .btn { display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 22px; border-radius: 11px; font-size: 1.4rem; font-weight: 600; letter-spacing: -.005em; transition: transform .14s, background .2s, border-color .2s, color .2s; }
         .btn:active { transform: translateY(1px); }
@@ -151,7 +152,7 @@
         .chart-mount > div > .nc-chart { flex: 1; min-height: 0; }
 
         /* ── Stat strip ──────────────────────────────────────── */
-        .stats { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; margin-top: 24px; }
         .stat { padding: 24px 22px; border-right: 1px solid var(--line-soft); }
         .stat:last-child { border-right: 0; }
         .stat .n { font-family: var(--display); font-size: 3.7rem; font-weight: 700; letter-spacing: -.02em; color: var(--ink); line-height: 1; }
@@ -291,6 +292,13 @@
                     </div>
                 </div>
 
+                <div class="stats" data-reveal aria-label="At a glance">
+                    <div class="stat"><div class="n">12</div><div class="l">chart types</div></div>
+                    <div class="stat"><div class="n">2</div><div class="l">files to ship</div></div>
+                    <div class="stat"><div class="n">0<span class="u">kb</span></div><div class="l">runtime deps</div></div>
+                    <div class="stat"><div class="n">~26<span class="u">kb</span></div><div class="l">min. footprint</div></div>
+                </div>
+
                 <div class="hero-foot" data-reveal>
                     <p class="deck">Because every bar, slice, and label is a real DOM node, you style Neo Charts with the CSS you already write. No SVG internals, no canvas redraws. Twelve chart types, two files, about 26&nbsp;kB.</p>
                     <div class="cta-row">
@@ -305,13 +313,6 @@
                     </div>
                 </div>
             </section>
-
-            <div class="stats" data-reveal aria-label="At a glance">
-                <div class="stat"><div class="n">12</div><div class="l">chart types</div></div>
-                <div class="stat"><div class="n">2</div><div class="l">files to ship</div></div>
-                <div class="stat"><div class="n">0<span class="u">kb</span></div><div class="l">runtime deps</div></div>
-                <div class="stat"><div class="n">~26<span class="u">kb</span></div><div class="l">min. footprint</div></div>
-            </div>
 
             <section id="demos">
                 <div class="sec-head" data-reveal>
