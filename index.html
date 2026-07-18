@@ -109,20 +109,20 @@
         :root[data-theme="light"] .theme-btn .sun { display: none; }
         :root[data-theme="light"] .theme-btn .moon { display: block; }
 
-        /* ── Hero (asymmetric split) ─────────────────────────── */
-        .hero { display: grid; grid-template-columns: 1.02fr 1fr; gap: 52px; align-items: center; padding: 88px 0 72px; }
-        .eyebrow { display: inline-block; font-size: 12.5px; font-weight: 600; letter-spacing: .02em; color: var(--accent-ink); margin-bottom: 22px; }
+        /* ── Hero (full-width: title on top, live interactive chart below) ── */
+        .hero { padding: 72px 0 60px; }
+        .hero-head { display: grid; grid-template-columns: 1.35fr 1fr; gap: 20px 56px; align-items: end; }
+        .hero-head .eyebrow-wrap { grid-column: 1 / -1; }
+        .eyebrow { display: inline-block; font-size: 12.5px; font-weight: 600; letter-spacing: .02em; color: var(--accent-ink); }
         .hero h1 {
             font-family: var(--display); font-weight: 700;
-            font-size: clamp(2.4rem, 1.2rem + 3.6vw, 4.2rem);
-            line-height: 1.04; letter-spacing: -.01em; color: var(--ink); text-wrap: balance;
+            font-size: clamp(2.3rem, 1rem + 3.9vw, 4.4rem);
+            line-height: 1.03; letter-spacing: -.01em; color: var(--ink); text-wrap: balance;
         }
-        /* Keep the two sentences on their own lines at desktop; collapse to natural flow on mobile. */
-        .hero h1 .lb { display: block; }
-        @media (max-width: 520px) { .hero h1 .lb { display: inline; } }
-        .hero h1 b { color: var(--accent-ink); font-weight: 640; }
-        .hero .deck { margin-top: 22px; max-width: 34ch; font-size: 1.06rem; line-height: 1.6; color: var(--ink-2); }
-        .cta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 13px; margin-top: 32px; }
+        .hero h1 b { color: var(--accent-ink); font-weight: 700; }
+        .hero-aside { padding-bottom: 6px; }
+        .hero .deck { max-width: 48ch; font-size: 1.05rem; line-height: 1.6; color: var(--ink-2); }
+        .cta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 13px; margin-top: 28px; }
         .btn { display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 22px; border-radius: 11px; font-size: 14.5px; font-weight: 600; letter-spacing: -.005em; transition: transform .14s, background .2s, border-color .2s, color .2s; }
         .btn:active { transform: translateY(1px); }
         .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
@@ -132,10 +132,19 @@
         .btn-ghost:hover { border-color: var(--ink-3); color: var(--ink); }
         .btn svg { width: 16px; height: 16px; }
 
-        /* Hero visual: a real chart rendered by the library (no fake window chrome). */
-        .hero-visual { position: relative; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-raised); box-shadow: var(--shadow); padding: 8px; }
-        .hero-visual::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(130% 90% at 100% 0%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 58%); }
-        .chart-mount { position: relative; height: 340px; display: flex; }
+        /* Full-width live chart panel with a type-toggle header (ported from the editor preview). */
+        .hero-visual { position: relative; margin-top: 40px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-raised); box-shadow: var(--shadow); overflow: hidden; }
+        .hero-visual::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(90% 120% at 100% 0%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 60%); }
+        .preview-bar { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding: 14px 16px; border-bottom: 1px solid var(--line-soft); }
+        .preview-title { font-family: var(--display); font-size: 15px; font-weight: 700; letter-spacing: -.01em; color: var(--ink); }
+        .preview-hint { font-size: 12.5px; color: var(--ink-3); }
+        .type-toggle { display: flex; flex-wrap: wrap; gap: 3px; padding: 3px; border: 1px solid var(--line); border-radius: 10px; background: color-mix(in srgb, var(--bg) 60%, transparent); }
+        .type-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 30px; padding: 0; border: 1px solid transparent; border-radius: 7px; color: var(--ink-3); background: transparent; cursor: pointer; transition: color .15s, background .15s, border-color .15s; }
+        .type-btn svg { width: 17px; height: 17px; display: block; }
+        .type-btn:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 8%, transparent); }
+        .type-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+        .type-btn.is-active { color: #fff; background: var(--accent-btn); border-color: var(--accent-btn); }
+        .chart-mount { position: relative; z-index: 1; height: clamp(320px, 42vw, 460px); display: flex; padding: 18px 20px 10px; }
         .chart-mount > div { flex: 1; min-width: 0; }
 
         /* ── Stat strip ──────────────────────────────────────── */
@@ -172,9 +181,9 @@
         /* Quick start */
         .start-grid { display: grid; grid-template-columns: .82fr 1.18fr; gap: 42px; align-items: start; }
         .points { margin-top: 22px; display: flex; flex-direction: column; gap: 13px; list-style: none; }
-        .points li { display: flex; gap: 12px; font-size: 14.5px; color: var(--ink-2); }
-        .points svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; color: var(--accent); }
-        .points code { color: var(--accent-ink); background: color-mix(in srgb, var(--accent) 10%, transparent); padding: 1px 5px; border-radius: 4px; white-space: nowrap; }
+        .points li { display: flex; align-items: flex-start; gap: 12px; font-size: 14.5px; line-height: 1.55; color: var(--ink-2); }
+        .points svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 3px; color: var(--accent); }
+        .points code { display: inline; color: var(--accent-ink); background: color-mix(in srgb, var(--accent) 12%, transparent); padding: .05em .4em; border-radius: 5px; font-size: .92em; white-space: nowrap; }
         pre { font-family: var(--mono); font-size: 13px; line-height: 1.75; background: var(--bg-raised); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px 24px; overflow-x: auto; color: var(--ink); box-shadow: var(--shadow); }
         pre .c { color: var(--ink-3); }
         pre .k { color: var(--accent-ink); }
@@ -206,7 +215,9 @@
         .tl-item::after { content: ""; position: absolute; left: -3px; top: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--ink-3); box-shadow: 0 0 0 3px var(--bg); }
         .tl-item.is-now::after { background: var(--accent); box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px color-mix(in srgb, var(--accent) 20%, transparent); }
         .tl-logo { width: 44px; height: 44px; border-radius: 11px; border: 1px solid var(--line); background: var(--bg-raised); display: grid; place-items: center; }
-        .tl-logo svg { width: 22px; height: 22px; }
+        .tl-logo svg { width: 24px; height: 24px; }
+        .tl-logo.tl-logo-wide { color: var(--ink); }
+        .tl-logo.tl-logo-wide svg { width: 30px; height: auto; }
         .tl-logo.mono { font-size: 13px; font-weight: 700; letter-spacing: -.01em; color: var(--ink); text-transform: lowercase; }
         .tl-body { display: flex; flex-direction: column; gap: 3px; padding-top: 3px; }
         .tl-name { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 640; color: var(--ink); }
@@ -228,7 +239,9 @@
         .foot .links { display: flex; gap: 22px; }
 
         @media (max-width: 860px) {
-            .hero { grid-template-columns: 1fr; gap: 40px; padding: 56px 0 48px; }
+            .hero { padding: 48px 0 44px; }
+            .hero-head { grid-template-columns: 1fr; gap: 20px; align-items: start; }
+            .chart-mount { height: clamp(280px, 60vw, 380px); padding: 14px 12px 6px; }
             .start-grid { grid-template-columns: 1fr; gap: 26px; }
             .stats { grid-template-columns: repeat(2, 1fr); }
             .stat:nth-child(2) { border-right: 0; }
@@ -263,24 +276,31 @@
 
         <main>
             <section class="hero">
-                <div class="hero-copy" data-reveal>
-                    <span class="eyebrow">Zero dependencies, MIT licensed</span>
-                    <h1>Charts built from plain <b>HTML</b>.<span class="lb"> No SVG. No Canvas.</span></h1>
-                    <p class="deck">Because every bar, slice, and label is a real DOM node, you style Neo Charts with the CSS you already write. No SVG internals, no canvas redraws. Twelve chart types in two files and about 26&nbsp;kB.</p>
-                    <div class="cta-row">
-                        <a class="btn btn-primary" href="demo/editor.html">
-                            Open the editor
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-                        </a>
-                        <a class="btn btn-ghost" href="https://github.com/andygongea/neo-charts">
-                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.1-1.47-1.1-1.47-.9-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.5 9.5 0 015 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0012 2z"/></svg>
-                            Star on GitHub
-                        </a>
+                <div class="hero-head" data-reveal>
+                    <div class="eyebrow-wrap"><span class="eyebrow">Zero dependencies, MIT licensed</span></div>
+                    <h1>Charts built from plain <b>HTML</b>. No SVG. No Canvas.</h1>
+                    <div class="hero-aside">
+                        <p class="deck">Because every bar, slice, and label is a real DOM node, you style Neo Charts with the CSS you already write. No SVG internals, no canvas redraws. Twelve types, two files, about 26&nbsp;kB.</p>
+                        <div class="cta-row">
+                            <a class="btn btn-primary" href="demo/editor.html">
+                                Open the editor
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                            </a>
+                            <a class="btn btn-ghost" href="https://github.com/andygongea/neo-charts">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.1-1.47-1.1-1.47-.9-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.5 9.5 0 015 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0012 2z"/></svg>
+                                Star on GitHub
+                            </a>
+                        </div>
                     </div>
                 </div>
 
                 <div class="hero-visual" data-reveal>
-                    <div class="chart-mount"><div id="hero-chart" role="img" aria-label="Weekly active users column chart rising from 2,140 on Monday to 5,780 on Sunday"></div></div>
+                    <div class="preview-bar">
+                        <span class="preview-title" id="preview-title">Column</span>
+                        <div class="type-toggle" id="typeToggle" role="radiogroup" aria-label="Chart type"></div>
+                        <span class="preview-hint">Pick a type to see it render live</span>
+                    </div>
+                    <div class="chart-mount"><div id="hero-chart" role="img" aria-label="Live chart preview"></div></div>
                 </div>
             </section>
 
@@ -329,9 +349,9 @@
                             <p>No bundler, no framework, no install. Drop in the stylesheet and script, add a container, render.</p>
                         </div>
                         <ul class="points">
-                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Restyle any part with a CSS rule, no chart-specific config API</li>
-                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Works from a plain <code>&lt;script&gt;</code> tag or as a UMD module</li>
-                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Resizes with its container and respects reduced motion</li>
+                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Restyle any part with a CSS rule, no chart-specific config API</span></li>
+                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Works from a plain <code>&lt;script&gt;</code> tag or as a UMD module</span></li>
+                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Resizes with its container and respects reduced motion</span></li>
                         </ul>
                     </div>
 <pre data-reveal aria-label="Usage example"><span class="c">&lt;!-- 1. include the two files --&gt;</span>
@@ -363,9 +383,9 @@
                             <p>The whole library is 12 kB of CSS you can read top to bottom, built on custom properties and predictable class names. Match your brand by overriding a variable, or reach any element with a normal selector.</p>
                         </div>
                         <ul class="points">
-                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Theme tokens like <code>--nc-text</code> and <code>--nc-bg</code> retint everything at once</li>
-                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Every part has a stable class: <code>.nc-item</code>, <code>.nc-tooltip</code>, <code>.nc-label</code></li>
-                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Animate, round, or space bars with plain CSS, no re-render needed</li>
+                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Theme tokens like <code>--nc-text</code> and <code>--nc-bg</code> retint everything at once</span></li>
+                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Every part has a stable class: <code>.nc-item</code>, <code>.nc-tooltip</code>, <code>.nc-label</code></span></li>
+                            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Animate, round, or space bars with plain CSS, no re-render needed</span></li>
                         </ul>
                     </div>
 <pre data-reveal aria-label="Styling example"><span class="c">/* Round every bar and give the tooltip your own look. */</span>
@@ -390,7 +410,7 @@
                 <div class="maker">
                     <div class="maker-left" data-reveal>
                         <div class="maker-id">
-                            <span class="maker-avatar" aria-hidden="true">AG<img src="assets/andy.jpg" alt="" width="52" height="52" loading="lazy" onerror="this.remove()"></span>
+                            <span class="maker-avatar">AG<img src="demo/andy-gongea-product-designer.jpg" alt="Andy Gongea" width="52" height="52" loading="lazy" onerror="this.remove()"></span>
                             <span class="maker-eyebrow"><span class="dot"></span>The maker</span>
                         </div>
                         <h2>Hi, I'm Andy. I design and build things for the web.</h2>
@@ -409,7 +429,10 @@
                         <ol class="timeline">
                             <li class="tl-item is-now">
                                 <span class="tl-logo" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M2 12h20M4.9 4.9l14.2 14.2M19.1 4.9L4.9 19.1"/></svg>
+                                    <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                                        <defs><radialGradient cx="50%" cy="50%" fx="50%" fy="50%" r="60.2%" gradientTransform="translate(0.5,0.5) scale(1,0.825) rotate(-90) translate(-0.5,-0.5)" id="tz-g"><stop stop-color="#00A8BF" offset="0%"/><stop stop-color="#88FFFF" offset="100%"/></radialGradient></defs>
+                                        <g transform="translate(-8,-8)"><path d="M40.2417576,35.999 L46.8492424,42.6066017 L42.6066017,46.8492424 L35.9997576,40.242 L36,36 L40.2417576,35.999 Z M23.7567576,35.999 L28,36 L27.9997576,40.242 L21.3933983,46.8492424 L17.1507576,42.6066017 L23.7567576,35.999 Z M35,14 L35,24.756 L42.6066017,17.1507576 L46.8492424,21.3933983 L40.2437576,27.999 L23.7577576,27.999 L17.1507576,21.3933983 L21.3933983,17.1507576 L29,24.756 L29,14 L35,14 Z" fill="url(#tz-g)"/><polygon fill="#88FFFF" points="50 29 50 35 35 35 35 50 29 50 29 35 14 35 14 29"/></g>
+                                    </svg>
                                 </span>
                                 <span class="tl-body">
                                     <span class="tl-name">Tenzai <span class="tl-now">Now</span></span>
@@ -417,7 +440,9 @@
                                 </span>
                             </li>
                             <li class="tl-item">
-                                <span class="tl-logo mono" aria-hidden="true">snyk</span>
+                                <span class="tl-logo tl-logo-wide" aria-hidden="true">
+                                    <svg viewBox="0 0 77 52" xmlns="http://www.w3.org/2000/svg"><path d="M59.0001 27.8598H58.6115V34.5779H53.7874V17.8511L58.6115 10.3104V25.9175C59.5717 24.7407 62.8068 20.2733 62.8068 20.2733H68.7625L63.1154 26.2488L68.9568 34.5894H62.8639L59.0001 27.8598ZM45.5569 26.763L47.5345 20.319H52.3128L46.7114 34.5322C45.0425 38.8053 42.6533 41.696 39.0867 41.696C37.715 41.696 36.5604 41.3418 35.9545 40.999L37.875 38.0284C38.1608 38.0627 38.458 38.0741 38.7552 38.0741C40.4013 38.0741 41.6359 36.4746 42.4361 34.5779L36.5604 20.319H41.9674L44.0822 26.683C44.4938 27.8941 44.791 30.202 44.791 30.202C44.791 30.202 45.1682 27.974 45.5569 26.763ZM30.9819 26.4316C30.9819 24.5693 30.1588 23.6895 28.5927 23.6895C27.8268 23.6895 27.0267 23.9066 26.4779 24.2379V34.5779H21.6539V20.4561L26.3751 20.0677L26.2608 22.3756H26.4208C27.4382 21.0045 29.1643 19.9648 31.222 19.9648C33.6911 19.9648 35.8288 21.4958 35.8288 25.1177V34.5779H30.9819V26.4316ZM7.84485 33.8467L8.27924 30.5562C9.78818 31.2988 11.4914 31.653 12.9204 31.653C13.9606 31.653 14.6465 31.2988 14.6465 30.6704C14.6465 28.8652 8.14206 29.2994 8.14206 24.5807C8.14206 21.5644 10.9084 19.9763 14.3721 19.9763C16.0983 19.9763 17.8816 20.4447 19.0361 20.856L18.5675 24.0894C17.3557 23.621 15.7096 23.1868 14.3379 23.1868C13.4919 23.1868 12.8061 23.4839 12.8061 24.0323C12.8061 25.8146 19.4477 25.4605 19.4477 30.0649C19.4477 33.1269 16.727 34.8864 13.0004 34.8864C10.9427 34.8864 9.27377 34.5322 7.84485 33.8467Z" fill="currentColor"/></svg>
+                                </span>
                                 <span class="tl-body">
                                     <span class="tl-name">Snyk</span>
                                     <span class="tl-role">Developer-first security</span>
@@ -465,25 +490,87 @@
         var prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
         root.setAttribute('data-theme', prefersLight ? 'light' : 'dark');
 
-        // Dogfood the library: the hero visual is a real chart, re-rendered on theme change.
+        // ── Hero: live chart preview with a chart-type toggle (ported from demo/editor.html) ──
+        var ALL_TYPES = ['column','bar','line','area','progress','waterfall','heatmap','treemap','gauge','pie','bullet','funnel'];
+        var TYPE_ICONS = {
+            column:    '<rect x="3" y="11" width="4" height="9" rx="1"/><rect x="10" y="6" width="4" height="14" rx="1"/><rect x="17" y="9" width="4" height="11" rx="1"/>',
+            bar:       '<rect x="4" y="4" width="14" height="4" rx="1"/><rect x="4" y="10" width="9" height="4" rx="1"/><rect x="4" y="16" width="17" height="4" rx="1"/>',
+            line:      '<polyline points="3 16 9 9 13 13 21 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+            area:      '<path d="M3 16 9 9 13 13 21 4V20H3Z" fill="currentColor" opacity=".35"/><polyline points="3 16 9 9 13 13 21 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+            progress:  '<rect x="3" y="9" width="18" height="6" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="9" width="11" height="6" rx="3"/>',
+            waterfall: '<rect x="3" y="4" width="4" height="6" rx="1"/><rect x="10" y="8" width="4" height="6" rx="1"/><rect x="17" y="12" width="4" height="6" rx="1"/>',
+            heatmap:   '<rect x="3" y="3" width="7" height="7" rx="1" opacity=".4"/><rect x="11" y="3" width="7" height="7" rx="1"/><rect x="3" y="11" width="7" height="7" rx="1"/><rect x="11" y="11" width="7" height="7" rx="1" opacity=".4"/>',
+            treemap:   '<rect x="3" y="3" width="11" height="11" rx="1"/><rect x="15" y="3" width="6" height="6" rx="1" opacity=".6"/><rect x="15" y="10" width="6" height="4" rx="1" opacity=".4"/><rect x="3" y="15" width="18" height="6" rx="1" opacity=".3"/>',
+            gauge:     '<path d="M4 17a8 8 0 0 1 16 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="17" x2="16" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+            pie:       '<path d="M12 3a9 9 0 1 0 9 9h-9Z" fill="currentColor"/><path d="M12 3v9h9A9 9 0 0 0 12 3Z" fill="currentColor" opacity=".4"/>',
+            bullet:    '<rect x="3" y="9" width="18" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="9" width="11" height="6" rx="1"/><line x1="17" y1="6" x2="17" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+            funnel:    '<path d="M3 4h18l-6 8v6l-6 3v-9L3 4Z" fill="currentColor"/>'
+        };
+        function typeLabel(t) { return t.charAt(0).toUpperCase() + t.slice(1); }
+        function seriesFor(type) {
+            switch (type) {
+                case 'gauge':     return [{ title: 'Performance', values: [86, 0, 100], labels: ['Current','Min','Max'], outputValues: ['86%'], suffix: '%', decimals: 0 }];
+                case 'heatmap':   return [
+                    { title: 'Mon', values: [2, 5, 12, 18, 8, 3], labels: ['6a','8a','10a','12p','2p','4p'], decimals: 0 },
+                    { title: 'Tue', values: [1, 3, 8, 22, 11, 6], labels: ['6a','8a','10a','12p','2p','4p'], decimals: 0 },
+                    { title: 'Wed', values: [3, 7, 14, 25, 13, 8], labels: ['6a','8a','10a','12p','2p','4p'], decimals: 0 }
+                ];
+                case 'pie':       return [{ title: 'Market share', values: [40, 30, 20, 10], labels: ['Chrome','Safari','Firefox','Other'], suffix: '%', decimals: 0 }];
+                case 'funnel':    return [{ title: 'Pipeline', values: [1200, 800, 400, 120], labels: ['Visitors','Leads','Opportunities','Deals'], decimals: 0 }];
+                case 'bullet':    return [{ title: 'KPIs', values: [82, 71, 93], labels: ['Revenue','Profit','Satisfaction'], suffix: '%', decimals: 0 }];
+                case 'treemap':   return [{ title: 'Disk', values: [450, 320, 280, 180, 150], labels: ['Photos','Videos','Docs','Music','Apps'], outputValues: ['450 GB','320 GB','280 GB','180 GB','150 GB'], decimals: 0 }];
+                case 'waterfall': return [{ title: 'Impact', values: [360, 300, 250, 200, 160], labels: ['Base','Feature A','Feature B','Feature C','Feature D'], decimals: 0 }];
+                case 'progress':  return [{ title: 'Budget', values: [45, 30, 15, 10], labels: ['Engineering','Marketing','Sales','Other'], suffix: '%', decimals: 0 }];
+                case 'line': case 'area':
+                    return [{ title: 'Active users', values: [2140, 2680, 2510, 3400, 3980, 4620, 5780], labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], decimals: 0 }];
+                default:          return [{ title: 'Revenue', values: [120, 450, 320, 780, 560], labels: ['Q1','Q2','Q3','Q4','Q5'], decimals: 0 }];
+            }
+        }
+
         var heroChart = null;
+        var currentType = 'column';
         function renderHero() {
             if (heroChart && heroChart.destroy) heroChart.destroy();
             var light = root.getAttribute('data-theme') === 'light';
-            heroChart = neoCharts('#hero-chart', {
-                type: 'column',
+            var cfg = {
+                type: currentType,
                 theme: light ? 'light' : 'dark',
                 title: { text: '' },
-                legend: false,
-                data: { series: [{
-                    title: 'Active users',
-                    values: [2140, 2680, 2510, 3400, 3980, 4620, 5780],
-                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                    color: ['#00aeff'],
-                    decimals: 0
-                }] }
-            });
+                legend: currentType === 'pie',
+                data: { series: seriesFor(currentType) }
+            };
+            heroChart = neoCharts('#hero-chart', cfg);
+            var titleEl = document.getElementById('preview-title');
+            if (titleEl) titleEl.textContent = typeLabel(currentType);
+            var btns = document.querySelectorAll('#typeToggle .type-btn');
+            for (var i = 0; i < btns.length; i++) {
+                var on = btns[i].getAttribute('data-type') === currentType;
+                btns[i].classList.toggle('is-active', on);
+                btns[i].setAttribute('aria-checked', on ? 'true' : 'false');
+            }
         }
+
+        // Build the type-toggle buttons.
+        (function buildTypeToggle() {
+            var wrap = document.getElementById('typeToggle');
+            ALL_TYPES.forEach(function (t) {
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'type-btn';
+                btn.setAttribute('data-type', t);
+                btn.setAttribute('role', 'radio');
+                btn.setAttribute('aria-checked', 'false');
+                btn.title = typeLabel(t);
+                btn.setAttribute('aria-label', typeLabel(t));
+                btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' + TYPE_ICONS[t] + '</svg>';
+                btn.addEventListener('click', function () {
+                    if (currentType === t) return;
+                    currentType = t;
+                    renderHero();
+                });
+                wrap.appendChild(btn);
+            });
+        })();
         renderHero();
 
         document.getElementById('themeBtn').addEventListener('click', function () {

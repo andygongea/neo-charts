@@ -1,0 +1,15 @@
+<svg width="48px" height="48px" viewBox="0 0 48 48" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>tenzai-full-logo-blue-white</title>
+    <defs>
+        <radialGradient cx="50%" cy="50%" fx="50%" fy="50%" r="60.1985575%" gradientTransform="translate(0.5, 0.5), scale(1, 0.825), rotate(-90), translate(-0.5, -0.5)" id="radialGradient-1">
+            <stop stop-color="#00A8BF" offset="0%"></stop>
+            <stop stop-color="#88FFFF" offset="100%"></stop>
+        </radialGradient>
+    </defs>
+    <g id="tenzai-full-logo-blue-white" stroke="none" fill="none" fill-rule="evenodd">
+        <g id="tenzai-symbol-black" transform="translate(-8, -8)">
+            <path d="M40.2417576,35.999 L46.8492424,42.6066017 L42.6066017,46.8492424 L35.9997576,40.242 L36,36 L40.2417576,35.999 Z M23.7567576,35.999 L28,36 L27.9997576,40.242 L21.3933983,46.8492424 L17.1507576,42.6066017 L23.7567576,35.999 Z M35,14 L35,24.756 L42.6066017,17.1507576 L46.8492424,21.3933983 L40.2437576,27.999 L23.7577576,27.999 L17.1507576,21.3933983 L21.3933983,17.1507576 L29,24.756 L29,14 L35,14 Z" id="Shape" fill="url(#radialGradient-1)"></path>
+            <polygon id="Path" fill="#88FFFF" points="50 29 50 35 35 35 35 50 29 50 29 35 14 35 14 29"></polygon>
+        </g>
+    </g>
+</svg>
