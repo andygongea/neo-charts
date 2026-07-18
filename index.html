@@ -96,7 +96,7 @@
 
         /* ── Top bar ─────────────────────────────────────────── */
         .topbar { display: flex; align-items: center; justify-content: space-between; height: 68px; border-bottom: 1px solid var(--line-soft); }
-        .wordmark { display: flex; align-items: center; gap: 11px; font-weight: 600; font-size: 1.55rem; color: var(--ink); letter-spacing: -.01em; }
+        .wordmark { display: flex; align-items: center; gap: 11px; font-weight: 600; font-size: 1.6rem; color: var(--ink); letter-spacing: -.01em; }
         .wordmark .mark { width: 26px; height: 26px; border-radius: 7px; background: var(--accent); display: grid; place-items: center; flex-shrink: 0; box-shadow: 0 3px 12px -3px color-mix(in srgb, var(--accent) 60%, transparent); }
         .wordmark .mark svg { width: 15px; height: 15px; }
         .topnav { display: flex; align-items: center; gap: 24px; font-size: 1.4rem; }
@@ -112,18 +112,18 @@
 
         /* ── Hero (full-width title, then the live chart, then description + CTAs) ── */
         .hero { padding: 72px 0 60px; }
-        .eyebrow { display: inline-block; font-size: 1.25rem; font-weight: 600; letter-spacing: .02em; color: var(--accent-ink); margin-bottom: 18px; }
+        .eyebrow { display: inline-block; font-size: 1.2rem; font-weight: 600; letter-spacing: .02em; color: var(--accent-ink); margin-bottom: 18px; }
         .hero h1 {
             font-family: var(--display); font-weight: 700;
-            font-size: clamp(4rem, 1.76rem + 4.4vw, 8rem);
+            font-size: clamp(3.4rem, 1.6rem + 3.6vw, 6rem);
             line-height: 1.01; letter-spacing: -.01em; color: var(--ink); text-wrap: balance;
         }
         .hero h1 b { color: var(--accent-ink); font-weight: 700; }
-        /* Description + CTAs sit below the chart, deck left, buttons right. */
-        .hero-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px 40px; margin-top: 28px; }
-        .hero .deck { max-width: 60ch; font-size: 1.68rem; line-height: 1.6; color: var(--ink-2); }
-        .cta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 13px; flex-shrink: 0; }
-        .btn { display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 22px; border-radius: 11px; font-size: 1.45rem; font-weight: 600; letter-spacing: -.005em; transition: transform .14s, background .2s, border-color .2s, color .2s; }
+        /* Description on top, CTAs centered below it, all centered under the chart. */
+        .hero-foot { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 24px; margin-top: 32px; }
+        .hero .deck { max-width: 62ch; font-size: 1.7rem; line-height: 1.6; color: var(--ink-2); }
+        .cta-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 13px; }
+        .btn { display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 22px; border-radius: 11px; font-size: 1.4rem; font-weight: 600; letter-spacing: -.005em; transition: transform .14s, background .2s, border-color .2s, color .2s; }
         .btn:active { transform: translateY(1px); }
         .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
         .btn-primary { background: var(--accent-btn); color: #fff; }
@@ -137,10 +137,10 @@
         .hero-visual::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(90% 120% at 100% 0%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 60%); }
         /* Type toggle sits BELOW the chart in its own toolbar. */
         .preview-toolbar { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; padding: 14px 16px; border-top: 1px solid var(--line-soft); }
-        .preview-hint { font-size: 1.25rem; color: var(--ink-3); }
+        .preview-hint { font-size: 1.2rem; color: var(--ink-3); }
         .type-toggle { display: flex; flex-wrap: wrap; gap: 3px; padding: 3px; border: 1px solid var(--line); border-radius: 10px; background: color-mix(in srgb, var(--bg) 60%, transparent); }
-        .type-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 30px; padding: 0; border: 1px solid transparent; border-radius: 7px; color: var(--ink-3); background: transparent; cursor: pointer; transition: color .15s, background .15s, border-color .15s; }
-        .type-btn svg { width: 17px; height: 17px; display: block; }
+        .type-btn { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 34px; padding: 0; border: 1px solid transparent; border-radius: 7px; color: var(--ink-3); background: transparent; cursor: pointer; transition: color .15s, background .15s, border-color .15s; }
+        .type-btn svg { width: 20px; height: 20px; display: block; }
         .type-btn:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 8%, transparent); }
         .type-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
         .type-btn.is-active { color: #fff; background: var(--accent-btn); border-color: var(--accent-btn); }
@@ -154,14 +154,14 @@
         .stats { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
         .stat { padding: 24px 22px; border-right: 1px solid var(--line-soft); }
         .stat:last-child { border-right: 0; }
-        .stat .n { font-family: var(--display); font-size: 3.68rem; font-weight: 700; letter-spacing: -.02em; color: var(--ink); line-height: 1; }
+        .stat .n { font-family: var(--display); font-size: 3.7rem; font-weight: 700; letter-spacing: -.02em; color: var(--ink); line-height: 1; }
         .stat .n .u { font-size: 1.6rem; color: var(--ink-3); margin-left: 1px; font-weight: 600; }
         .stat .l { margin-top: 8px; font-size: 1.3rem; color: var(--ink-3); }
 
         /* ── Sections ────────────────────────────────────────── */
         section { padding: 82px 0; }
         .sec-head { margin-bottom: 38px; }
-        .sec-head h2 { font-family: var(--display); font-size: clamp(2.56rem, 1.68rem + 1.6vw, 3.68rem); font-weight: 700; letter-spacing: -.01em; line-height: 1.08; color: var(--ink); }
+        .sec-head h2 { font-family: var(--display); font-size: clamp(2.6rem, 1.7rem + 1.6vw, 3.7rem); font-weight: 700; letter-spacing: -.01em; line-height: 1.08; color: var(--ink); }
         .sec-head p { margin-top: 10px; max-width: 56ch; font-size: 1.5rem; color: var(--ink-2); }
 
         /* Demos as an editorial divided list (not three equal cards). */
@@ -174,9 +174,9 @@
         .demo-row:hover { background: var(--bg-raised); padding-left: 22px; }
         .demo-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
         .demo-row .head { display: flex; align-items: center; gap: 12px; }
-        .demo-row h3 { font-size: 2.048rem; font-weight: 620; letter-spacing: -.02em; color: var(--ink); }
-        .demo-row .kind { font-family: var(--mono); font-size: 1.05rem; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--accent-ink); padding: 3px 8px; border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent); border-radius: 5px; }
-        .demo-row p { margin-top: 9px; max-width: 64ch; font-size: 1.45rem; color: var(--ink-2); }
+        .demo-row h3 { font-size: 2rem; font-weight: 620; letter-spacing: -.02em; color: var(--ink); }
+        .demo-row .kind { font-family: var(--mono); font-size: 1rem; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--accent-ink); padding: 3px 8px; border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent); border-radius: 5px; }
+        .demo-row p { margin-top: 9px; max-width: 64ch; font-size: 1.4rem; color: var(--ink-2); }
         .demo-row .go { display: inline-flex; align-items: center; gap: 8px; font-size: 1.4rem; font-weight: 600; color: var(--ink-3); white-space: nowrap; transition: color .2s, gap .2s; }
         .demo-row:hover .go { color: var(--accent-ink); gap: 12px; }
         .demo-row .go svg { width: 15px; height: 15px; }
@@ -184,7 +184,7 @@
         /* Quick start */
         .start-grid { display: grid; grid-template-columns: .82fr 1.18fr; gap: 42px; align-items: start; }
         .points { margin-top: 22px; display: flex; flex-direction: column; gap: 13px; list-style: none; }
-        .points li { display: flex; align-items: flex-start; gap: 12px; font-size: 1.45rem; line-height: 1.55; color: var(--ink-2); }
+        .points li { display: flex; align-items: flex-start; gap: 12px; font-size: 1.4rem; line-height: 1.55; color: var(--ink-2); }
         .points svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 3px; color: var(--accent); }
         .points code { display: inline; color: var(--accent-ink); background: color-mix(in srgb, var(--accent) 12%, transparent); padding: .05em .4em; border-radius: 5px; font-size: .92em; white-space: nowrap; }
         pre { font-family: var(--mono); font-size: 1.3rem; line-height: 1.75; background: var(--bg-raised); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px 24px; overflow-x: auto; color: var(--ink); box-shadow: var(--shadow); }
@@ -200,14 +200,14 @@
         .maker-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
         .maker-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 1.2rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
         .maker-eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
-        .maker h2 { font-family: var(--display); font-size: clamp(2.32rem, 1.68rem + 1.3vw, 3.12rem); font-weight: 700; line-height: 1.12; letter-spacing: -.01em; color: var(--ink); max-width: 15ch; }
+        .maker h2 { font-family: var(--display); font-size: clamp(2.3rem, 1.7rem + 1.3vw, 3.1rem); font-weight: 700; line-height: 1.12; letter-spacing: -.01em; color: var(--ink); max-width: 15ch; }
         .maker-bio { margin-top: 18px; max-width: 46ch; font-size: 1.5rem; line-height: 1.65; color: var(--ink-2); }
-        .maker-linkedin { display: inline-flex; align-items: center; gap: 8px; margin-top: 24px; font-size: 1.45rem; font-weight: 600; color: var(--accent-ink); transition: gap .2s; }
+        .maker-linkedin { display: inline-flex; align-items: center; gap: 8px; margin-top: 24px; font-size: 1.4rem; font-weight: 600; color: var(--accent-ink); transition: gap .2s; }
         .maker-linkedin:hover { gap: 11px; }
         .maker-linkedin > svg:first-child { width: 17px; height: 17px; }
         .maker-linkedin .ext { width: 14px; height: 14px; }
         .maker-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
-        .maker-tags span { font-size: 1.25rem; color: var(--ink-2); border: 1px solid var(--line); border-radius: 999px; padding: 5px 13px; }
+        .maker-tags span { font-size: 1.2rem; color: var(--ink-2); border: 1px solid var(--line); border-radius: 999px; padding: 5px 13px; }
 
         .timeline { list-style: none; position: relative; padding-left: 4px; }
         .tl-item { position: relative; display: grid; grid-template-columns: 44px 1fr; gap: 18px; padding: 0 0 26px 26px; }
@@ -224,8 +224,8 @@
         .tl-logo.mono { font-size: 1.3rem; font-weight: 700; letter-spacing: -.01em; color: var(--ink); text-transform: lowercase; }
         .tl-body { display: flex; flex-direction: column; gap: 3px; padding-top: 3px; }
         .tl-name { display: inline-flex; align-items: center; gap: 8px; font-size: 1.5rem; font-weight: 640; color: var(--ink); }
-        .tl-now { font-size: 1.05rem; font-weight: 600; letter-spacing: .04em; color: var(--accent-ink); border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent); border-radius: 5px; padding: 2px 7px; text-transform: none; }
-        .tl-role { font-size: 1.35rem; color: var(--ink-3); }
+        .tl-now { font-size: 1rem; font-weight: 600; letter-spacing: .04em; color: var(--accent-ink); border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent); border-radius: 5px; padding: 2px 7px; text-transform: none; }
+        .tl-role { font-size: 1.4rem; color: var(--ink-3); }
         .also { margin-top: 30px; padding-top: 24px; border-top: 1px solid var(--line-soft); }
         .also-label { display: block; font-size: 1.1rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 14px; }
         .also-links { display: flex; flex-wrap: wrap; gap: 22px; }
@@ -236,14 +236,13 @@
 
         /* Footer */
         footer { border-top: 1px solid var(--line-soft); }
-        .foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 28px 0 40px; font-size: 1.35rem; color: var(--ink-3); }
+        .foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 28px 0 40px; font-size: 1.4rem; color: var(--ink-3); }
         .foot a { color: var(--ink-2); transition: color .18s; }
         .foot a:hover { color: var(--ink); }
         .foot .links { display: flex; gap: 22px; }
 
         @media (max-width: 860px) {
             .hero { padding: 48px 0 44px; }
-            .hero-foot { align-items: flex-start; }
             .chart-mount { height: clamp(280px, 60vw, 380px); padding: 14px 12px 6px; }
             .start-grid { grid-template-columns: 1fr; gap: 26px; }
             .stats { grid-template-columns: repeat(2, 1fr); }
@@ -524,12 +523,28 @@
                 case 'treemap':   return [{ title: 'Disk', values: [450, 320, 280, 180, 150], labels: ['Photos','Videos','Docs','Music','Apps'], outputValues: ['450 GB','320 GB','280 GB','180 GB','150 GB'], decimals: 0 }];
                 case 'waterfall': return [{ title: 'Impact', values: [360, 300, 250, 200, 160], labels: ['Base','Feature A','Feature B','Feature C','Feature D'], decimals: 0 }];
                 case 'progress':  return [{ title: 'Budget', values: [45, 30, 15, 10], labels: ['Engineering','Marketing','Sales','Other'], suffix: '%', decimals: 0 }];
+                // Two series so a legend renders (the library only shows a series legend for 2+).
                 case 'line': case 'area':
-                    return [{ title: 'Active users', values: [2140, 2680, 2510, 3400, 3980, 4620, 5780], labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], decimals: 0 }];
+                    return [
+                        { title: 'This week', values: [2140, 2680, 2510, 3400, 3980, 4620, 5780], labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], decimals: 0 },
+                        { title: 'Last week', values: [1800, 2100, 2300, 2600, 3100, 3400, 4200], labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], decimals: 0 }
+                    ];
+                case 'column': case 'bar':
+                    return [
+                        { title: '2024', values: [120, 450, 320, 780, 560], labels: ['Q1','Q2','Q3','Q4','Q5'], decimals: 0 },
+                        { title: '2025', values: [200, 520, 410, 690, 720], labels: ['Q1','Q2','Q3','Q4','Q5'], decimals: 0 }
+                    ];
                 default:          return [{ title: 'Revenue', values: [120, 450, 320, 780, 560], labels: ['Q1','Q2','Q3','Q4','Q5'], decimals: 0 }];
             }
         }
 
+        // A descriptive title per type (shown above the chart).
+        var TYPE_TITLES = {
+            column: 'Quarterly revenue', bar: 'Quarterly revenue', line: 'Weekly active users',
+            area: 'Weekly active users', progress: 'Budget allocation', waterfall: 'Revenue impact',
+            heatmap: 'Traffic by hour', treemap: 'Disk usage', gauge: 'Performance',
+            pie: 'Browser market share', bullet: 'KPIs vs target', funnel: 'Conversion pipeline'
+        };
         var heroChart = null;
         var currentType = 'column';
         function renderHero() {
@@ -538,8 +553,8 @@
             var cfg = {
                 type: currentType,
                 theme: light ? 'light' : 'dark',
-                title: { text: '' },
-                legend: currentType === 'pie',
+                title: { text: TYPE_TITLES[currentType] || 'Neo Charts', align: 'left' },
+                legend: true, // library auto-suppresses it for types that draw labels on the chart
                 data: { series: seriesFor(currentType) }
             };
             heroChart = neoCharts('#hero-chart', cfg);
