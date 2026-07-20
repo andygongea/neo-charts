@@ -24,14 +24,14 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-            /* Cool near-black base (matched to the cool blue accent), one accent color. */
-            --bg: #0d1117;
-            --bg-raised: #151b24;
-            --line: rgba(255, 255, 255, .09);
-            --line-soft: rgba(255, 255, 255, .055);
-            --ink: #eef2f7;
-            --ink-2: #a6b0bd;
-            --ink-3: #6e7885;
+            /* Neutral near-black base, matched to the demo dashboards (demo1/demo2). */
+            --bg: #111113;
+            --bg-raised: #19191b;
+            --line: rgba(255, 255, 255, .07);
+            --line-soft: rgba(255, 255, 255, .045);
+            --ink: #e4e4e7;
+            --ink-2: #a0a0a6;
+            --ink-3: #6b6b70;
             /* Brand accent used for the chart, borders, hover glow (not text-critical surfaces). */
             --accent: #00aeff;
             /* Darker blue for filled buttons so white label text clears WCAG AA (4.5:1). */
@@ -49,13 +49,13 @@
             --mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
         }
         :root[data-theme="light"] {
-            --bg: #f2f5f8;
-            --bg-raised: #ffffff;
-            --line: rgba(0, 0, 0, .1);
-            --line-soft: rgba(0, 0, 0, .06);
-            --ink: #141a21;
-            --ink-2: #48515c;
-            --ink-3: #79828f;
+            --bg: #ededee;
+            --bg-raised: #f9f9fa;
+            --line: rgba(0, 0, 0, .08);
+            --line-soft: rgba(0, 0, 0, .05);
+            --ink: #1c1c1e;
+            --ink-2: #505055;
+            --ink-3: #78787d;
             --accent: #0090df;
             --accent-btn: #0079b4;
             /* Darker blue so accent text clears WCAG AA on the light base (5:1 on #f2f5f8). */
