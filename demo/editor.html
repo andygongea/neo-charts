@@ -331,6 +331,7 @@
             if ((t === 'gauge') && !config.gauge) config.gauge = { thickness: 14, valueFontSize: 48 };
             if ((t === 'pie') && !config.pie) config.pie = { innerRadius: 0 };
             if ((t === 'funnel') && !config.funnel) config.funnel = { direction: 'vertical', flip: false, mode: 'funnel' };
+            if ((t === 'waterfall') && !config.waterfall) config.waterfall = { direction: 'horizontal' };
             if ((t === 'bullet') && !config.bullet) config.bullet = { targets: [], ranges: [] };
         }
 
@@ -412,7 +413,11 @@
                 out.push(toggleCtrl('Stacked', 'data.render.stacked', false));
                 out.push(rangeCtrl('Gap', 'gap', 0, 12, 1, 2));
             }
-            if (t === 'waterfall' || t === 'treemap' || t === 'heatmap') {
+            if (t === 'waterfall') {
+                out.push(selectCtrl('Direction', 'waterfall.direction', ['horizontal','vertical']));
+                out.push(rangeCtrl('Gap', 'gap', 0, 12, 1, 2));
+            }
+            if (t === 'treemap' || t === 'heatmap') {
                 out.push(rangeCtrl('Gap', 'gap', 0, 12, 1, 2));
             }
             if (t === 'column' || t === 'bar' || t === 'line' || t === 'area') {
