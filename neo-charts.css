@@ -267,6 +267,8 @@
 .nc-animate.nc-bar .nc-item { animation:nc-grow-right .6s ease-out both; transform-origin:left; }
 .nc-animate.nc-progress .nc-item { animation:nc-grow-right .6s ease-out both; transform-origin:left; }
 .nc-animate.nc-waterfall .nc-item { animation:nc-grow-right .6s ease-out both; transform-origin:left; }
+/* Vertical waterfall bars are columns, so they grow up from the baseline, not sideways. */
+.nc-animate.nc-waterfall.is-waterfall-vertical .nc-item { animation-name:nc-grow-up; transform-origin:bottom; }
 .nc-animate.nc-linechart .nc-dot,
 .nc-animate.nc-area .nc-dot { animation:nc-fade-in .4s ease-out both; }
 .nc-animate.nc-linechart .nc-line-segment,
@@ -274,9 +276,12 @@
 .nc-animate.nc-area .nc-area-fill { animation:nc-fade-in .6s ease-out both; }
 .nc-animate.nc-heatmap .nc-heatmap-cell { animation:nc-fade-in .4s ease-out both; }
 .nc-animate.nc-treemap .nc-treemap-cell { animation:nc-fade-in .4s ease-out both; }
-.nc-animate.nc-pie .nc-pie-ring { animation:nc-fade-in .6s ease-out both; }
+/* Pie/donut entry is a clockwise sweep driven in JS (see renderPie's paint loop): the ring unfurls
+   from 12 o'clock, slices revealing as the sweep passes. No CSS keyframe — a fade would double up. */
 .nc-animate.nc-bullet .nc-bullet-bar { animation:nc-grow-right .6s ease-out both; transform-origin:left; }
-.nc-animate.nc-funnel .nc-funnel-wrap { animation:nc-fade-in .4s ease-out both; }
+/* Each band fades in on its own — the per-item animation-delay (set in JS) lands on .nc-funnel-item,
+   so the animation must run there (not on the wrap) for the bands to stagger one after another. */
+.nc-animate.nc-funnel .nc-funnel-item { animation:nc-fade-in .4s ease-out both; }
 
 /* Respect the user's motion preference: skip entry animations and hover transitions
    (elements use fill-mode "both", so removing the animation shows the final state). */

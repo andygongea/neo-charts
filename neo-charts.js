@@ -18,6 +18,7 @@
     var ANIMATION_STAGGER_MAX = 1.2;
     var GAUGE_ANIM_DURATION = 1000;
     var GAUGE_GAP_DEG = 30;
+    var PIE_SWEEP_DURATION = 900; // ms for the pie/donut clockwise entry sweep
 
     var seriesDefaults = {
         title: '',
@@ -1155,6 +1156,35 @@
             return stops.join(',');
         }
 
+        // Clockwise entry sweep: paint each slice only up to `sweepDeg` (0..360), so the ring unfurls
+        // from 12 o'clock as sweepDeg grows. Slices fully past the sweep are dropped, the slice the
+        // sweep is mid-crossing is clipped to sweepDeg, and a transparent remainder fills to 360.
+        function pieSweepStops(serie, total, gapDeg, sweepDeg) {
+            if (sweepDeg >= 360) return pieSliceStops(serie, total, gapDeg);
+            var n = serie.values.length;
+            var halfGap = (n > 1 && gapDeg > 0) ? gapDeg / 2 : 0;
+            var stops = [];
+            var angle = 0;
+            for (var i = 0; i < n && angle < sweepDeg; i++) {
+                var sliceAngle = (pieVal(serie.values[i]) / total) * 360;
+                var endAngle = Math.min(angle + sliceAngle, sweepDeg); // clip the crossing slice
+                var color = getColorValue(serie.color, i);
+                if (halfGap > 0) {
+                    var inset = insetSlice(angle, angle + sliceAngle, halfGap);
+                    var gs = Math.min(inset.start, endAngle);
+                    var ge = Math.min(inset.end, endAngle);
+                    if (gs > angle) stops.push('transparent ' + toFixed3(angle) + 'deg ' + toFixed3(gs) + 'deg');
+                    if (ge > gs) stops.push(color + ' ' + toFixed3(gs) + 'deg ' + toFixed3(ge) + 'deg');
+                    if (endAngle > ge) stops.push('transparent ' + toFixed3(ge) + 'deg ' + toFixed3(endAngle) + 'deg');
+                } else {
+                    stops.push(color + ' ' + toFixed3(angle) + 'deg ' + toFixed3(endAngle) + 'deg');
+                }
+                angle += sliceAngle;
+            }
+            if (sweepDeg < 360) stops.push('transparent ' + toFixed3(sweepDeg) + 'deg 360deg');
+            return stops.join(',');
+        }
+
         function renderPie() {
             var html = '';
             if (!series.length) return html;
@@ -1665,6 +1695,7 @@
         // Post-render: position line segments
         var resizeHandler = null;
         var gaugeAnimId = null;
+        var pieSweepId = null;
 
         function getSmoothedValues(si) {
             if (!_smoothCache[si]) {
@@ -2173,22 +2204,32 @@
                 function easeOut(t) {
                     return 1 - Math.pow(1 - t, 3);
                 }
+                // The arc uses an ease-out-back so it sweeps up, gently overshoots its target, and
+                // settles — a more deliberate "drawing" feel than a flat fill. The VALUE text stays
+                // on the monotonic ease-out (never exceeds the target, so e.g. 86% never flashes 88%).
+                function easeOutBack(t) {
+                    var c1 = 1.70158, c3 = c1 + 1;
+                    return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+                }
 
-                function paintGauge(eased) {
-                    var fill = (eased * gPct * gArc).toFixed(1);
+                function paintGauge(progress) {
+                    // Clamp the overshot arc so the fill can visibly bump past its value then ease
+                    // back, without ever painting beyond the track's own arc length.
+                    var arcEased = Math.max(0, Math.min(easeOutBack(progress), gPct > 0 ? (1 / gPct) : 1));
+                    var fill = (arcEased * gPct * gArc).toFixed(1);
 
                     ring.style.background = 'conic-gradient(from ' + gStart + 'deg, '
                         + gColor + ' 0deg, ' + gColor + ' ' + fill + 'deg, '
                         + gTrack + ' ' + fill + 'deg, ' + gTrack + ' ' + gArc + 'deg, '
                         + 'transparent ' + gArc + 'deg)';
 
-                    gValEl.textContent = gPre + (eased * gNum).toFixed(gDec) + gSuf;
+                    gValEl.textContent = gPre + (easeOut(progress) * gNum).toFixed(gDec) + gSuf;
                 }
 
                 function animateGauge(timestamp) {
                     if (!gStartTime) gStartTime = timestamp;
                     var progress = Math.min((timestamp - gStartTime) / gDuration, 1);
-                    paintGauge(easeOut(progress));
+                    paintGauge(progress); // paintGauge applies easing (ease-out-back arc, ease-out value)
 
                     if (progress < 1) {
                         gaugeAnimId = requestAnimationFrame(animateGauge);
@@ -2249,11 +2290,32 @@
                 // here leaves it intact.
                 pieRing.style.background = pieSheen + 'conic-gradient(from 0deg,' + pieSliceStops(pieSerie, pieTotal, pieGapDeg) + ')';
             }
-            if (pieHasGap) {
-                // Paint once now, and again next frame: at init the ring may not be laid out yet
-                // (radius 0 ⇒ no gap), so the deferred pass applies the gap once a size is known.
+
+            // Clockwise entry sweep: the ring unfurls from 12 o'clock as sweepDeg eases 0 -> 360,
+            // then hands off to the steady-state paint. Skipped (paint final immediately) when the
+            // caller disabled animation or the user prefers reduced motion.
+            var pieReduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+            function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+            if (config.animate && !pieReduceMotion && typeof requestAnimationFrame !== 'undefined') {
+                var pieSweepStart = null;
+                function animatePieSweep(ts) {
+                    if (pieSweepStart === null) pieSweepStart = ts;
+                    var p = Math.min((ts - pieSweepStart) / PIE_SWEEP_DURATION, 1);
+                    pieGapDeg = computeGapDeg();
+                    var sweepDeg = easeOutCubic(p) * 360;
+                    pieRing.style.background = pieSheen + 'conic-gradient(from 0deg,' + pieSweepStops(pieSerie, pieTotal, pieGapDeg, sweepDeg) + ')';
+                    if (p < 1) { pieSweepId = requestAnimationFrame(animatePieSweep); }
+                    else { paintPieRing(); }
+                }
+                // Kick off via rAF so the first frame carries a real timestamp (a direct call would
+                // pass ts=undefined -> NaN progress -> instant jump to the final paint, no sweep).
+                pieSweepId = requestAnimationFrame(animatePieSweep);
+            } else {
                 paintPieRing();
-                if (typeof requestAnimationFrame !== 'undefined') requestAnimationFrame(paintPieRing);
+                // At init the ring may not be laid out yet (radius 0 -> no gap); re-apply next frame.
+                if (pieHasGap && typeof requestAnimationFrame !== 'undefined') requestAnimationFrame(paintPieRing);
+            }
+            if (pieHasGap) {
                 // The pie claims the single shared resize observer, so it must also drive the
                 // legend auto-hide that the fallback at the end of render() would otherwise own.
                 observeResize(function () { paintPieRing(); toggleLegend(element); });
@@ -2377,6 +2439,7 @@
             if (resizeHandler) window.removeEventListener('resize', resizeHandler);
             if (resizeObserver) resizeObserver.disconnect();
             if (gaugeAnimId) cancelAnimationFrame(gaugeAnimId);
+            if (pieSweepId) cancelAnimationFrame(pieSweepId);
             if (pendingResizeRaf) cancelAnimationFrame(pendingResizeRaf);
             element.innerHTML = '';
             delete element._ncDestroy;
