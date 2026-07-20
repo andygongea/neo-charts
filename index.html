@@ -518,7 +518,7 @@
                 case 'heatmap':   {
                     // All 7 weekdays, standard 9-to-5 business hours, one shared color per row.
                     var hcolor = ['#00aeff'];
-                    var hours = ['9a','10a','11a','12p','1p','2p','3p','4p','5p'];
+                    var hours = ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
                     return [
                         { title: 'Mon', color: hcolor, values: [ 8, 22, 34, 18, 26, 40, 38, 24, 10], labels: hours, decimals: 0 },
                         { title: 'Tue', color: hcolor, values: [10, 26, 38, 20, 30, 44, 42, 28, 12], labels: hours, decimals: 0 },
@@ -533,7 +533,7 @@
                 case 'funnel':    return [{ title: 'Pipeline', values: [1200, 800, 400, 120], labels: ['Visitors','Leads','Opportunities','Deals'], decimals: 0 }];
                 case 'bullet':    return [{ title: 'KPIs', values: [82, 71, 93], labels: ['Revenue','Profit','Satisfaction'], suffix: '%', decimals: 0 }];
                 case 'treemap':   return [{ title: 'Disk', values: [450, 320, 280, 180, 150], labels: ['Photos','Videos','Docs','Music','Apps'], outputValues: ['450 GB','320 GB','280 GB','180 GB','150 GB'], decimals: 0 }];
-                case 'waterfall': return [{ title: 'Impact', values: [360, 300, 250, 200, 160], labels: ['Base','Feature A','Feature B','Feature C','Feature D'], decimals: 0 }];
+                case 'waterfall': return [{ title: 'Impact', values: [820, 240, 180, -90, 130, -70, 95, -110, 60], labels: ['Starting ARR','New business','Expansion','Contraction','Upsell','Churn','Reactivation','Discounts','Services'], prefix: '$', suffix: 'K', decimals: 0 }];
                 case 'progress':  return [{ title: 'Budget', values: [45, 30, 15, 10], labels: ['Engineering','Marketing','Sales','Other'], suffix: '%', decimals: 0 }];
                 // Two series so a legend renders (the library only shows a series legend for 2+).
                 case 'line': case 'area':
