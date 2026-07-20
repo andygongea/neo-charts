@@ -11,14 +11,14 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%2300aeff'/%3E%3Cg fill='%23fff'%3E%3Crect x='5' y='12' width='3' height='7' rx='1'/%3E%3Crect x='10.5' y='7' width='3' height='12' rx='1'/%3E%3Crect x='16' y='9.5' width='3' height='9.5' rx='1'/%3E%3C/g%3E%3C/svg%3E">
     <link rel="stylesheet" href="neo-charts.css">
     <style>
-        /* Self-hosted Oxanium (OFL-1.1, see assets/fonts/LICENSE-Oxanium.txt): a geometric,
-           slightly futuristic display face. Same-origin woff2, no CDN; only the Bold weight used. */
+        /* Self-hosted Oxygen (OFL-1.1, see assets/fonts/LICENSE-Oxygen.txt): a humanist sans
+           by Vernon Adams. Same-origin woff2, no CDN; only the Bold weight used for headings. */
         @font-face {
-            font-family: 'Oxanium';
+            font-family: 'Oxygen';
             font-style: normal;
             font-weight: 700;
             font-display: swap;
-            src: url('assets/fonts/oxanium-700.woff2') format('woff2');
+            src: url('assets/fonts/oxygen-700.woff2') format('woff2');
         }
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -43,9 +43,9 @@
             --maxw: 1140px;
             /* Body: neutral grotesk. No serif, no Inter, no external font request. */
             --sans: 'Geist', 'Segoe UI Variable', ui-sans-serif, system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
-            /* Display: Oxanium, a geometric futuristic face for headlines. Self-hosted woff2, no
-               CDN; falls back to a heavy sans while it swaps or if it fails to load. */
-            --display: 'Oxanium', var(--sans);
+            /* Display: Oxygen, a humanist sans for headlines. Self-hosted woff2, no
+               CDN; falls back to the body sans while it swaps or if it fails to load. */
+            --display: 'Oxygen', var(--sans);
             --mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
         }
         :root[data-theme="light"] {
