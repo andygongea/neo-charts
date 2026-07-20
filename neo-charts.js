@@ -63,6 +63,9 @@
             flip: false,
             mode: 'funnel'
         },
+        waterfall: {
+            direction: 'horizontal'
+        },
         highlight: false,
         animate: true,
         legend: true,
@@ -243,6 +246,10 @@
         var series = config.data.series;
         var render = config.data.render;
         var type = config.type;
+        // Vertical waterfall renders column-style (bars grow bottom-to-top, categories on the
+        // x-axis). Horizontal (default) keeps the bar-style layout. Gated on type so bar/bullet,
+        // which share the horizontal layout, are never affected.
+        var waterfallVertical = config.type === 'waterfall' && config.waterfall.direction === 'vertical';
         var useGradient = config.gradient !== false;
         var pieSheen = useGradient ? PIE_SHEEN : '';
         var validTypes = ['column', 'bar', 'line', 'area', 'progress', 'waterfall', 'gauge', 'heatmap', 'treemap', 'pie', 'bullet', 'funnel', 'trapezoid'];
@@ -429,7 +436,9 @@
         }
 
         function guidelineData(number) {
-            var isHorizontal = (type === 'column' || type === 'line' || type === 'area');
+            // "isHorizontal" here means the value axis runs vertically (labels descend down the
+            // right edge) — true for column/line/area and for a vertical waterfall (column-style).
+            var isHorizontal = (type === 'column' || type === 'line' || type === 'area' || waterfallVertical);
             var hasNeg = minValue < 0;
             var waterfallScale = 0;
             if (type === 'waterfall' && series.length > 0) {
@@ -746,6 +755,13 @@
             var denom = niceMax(runningPeak(vals));
             if (!denom) return html;
 
+            // Vertical bars are absolutely positioned, so (unlike flex column bars) they need an
+            // explicit x slot. Divide the plot into `len` equal columns with a small inter-column
+            // gap, matching the visual rhythm of the column chart.
+            var slotPct = 100 / len;
+            var barGapPct = len > 1 ? Math.min(4, slotPct * 0.2) : 0;
+            var barWidthPct = slotPct - barGapPct;
+
             var total = 0;
             for (var i = 0; i < len; i++) {
                 var delta = vals[i] || 0;
@@ -753,10 +769,19 @@
                 total += delta;
                 var lo = Math.min(startTotal, total);
                 var hi = Math.max(startTotal, total);
-                var left = toFixed3(Math.max(0, lo) / denom * 100);
-                var width = toFixed3(Math.max(0, hi - Math.max(0, lo)) / denom * 100);
+                var start = toFixed3(Math.max(0, lo) / denom * 100);
+                var extent = toFixed3(Math.max(0, hi - Math.max(0, lo)) / denom * 100);
                 var neg = delta < 0 ? ' is-negative' : '';
-                var style = 'left:' + left + '%;width:' + width + '%;' + getColor(serie.color, i, '90deg', useGradient) + delay(i);
+                // Vertical: bars grow bottom-to-top (bottom/height) within an evenly-spaced x slot.
+                // Horizontal: bars grow left-to-right (left/width). Both fill along a 90deg gradient.
+                var pos;
+                if (waterfallVertical) {
+                    var slotLeft = toFixed3(i * slotPct + barGapPct / 2);
+                    pos = 'left:' + slotLeft + '%;width:' + toFixed3(barWidthPct) + '%;bottom:' + start + '%;height:' + extent + '%;';
+                } else {
+                    pos = 'left:' + start + '%;width:' + extent + '%;';
+                }
+                var style = pos + getColor(serie.color, i, '90deg', useGradient) + delay(i);
                 html += '<div class="nc-item' + neg + '"' + dataAttr(0, i) + ' style="' + style + '">';
                 html += renderItemContent(0, i, { hideLabel: true, hideValue: true });
                 html += renderTooltip(0, i);
@@ -1426,6 +1451,7 @@
         if (config.theme === 'light') classes.push('nc-light');
         if (type === 'funnel' && config.funnel.direction === 'horizontal') classes.push('is-funnel-horizontal');
         if (type === 'funnel' && config.funnel.flip) classes.push('is-funnel-flipped');
+        if (waterfallVertical) classes.push('is-waterfall-vertical');
 
         var heightProp = type === 'gauge' ? 'height' : 'min-height';
         var safeWidth = sanitizeLength(config.layout.width, '100%');
@@ -1445,7 +1471,9 @@
         chartTemplate += '<div class="nc-chart-body">';
 
         var useGrid = (type === 'line' || type === 'area' || type === 'column' || type === 'bar' || type === 'waterfall' || type === 'bullet');
-        var isHorizontalBar = type === 'bar' || type === 'waterfall' || type === 'bullet';
+        // Vertical waterfall lays out column-style (value axis on y, category labels on x), so it is
+        // NOT a horizontal bar. Horizontal waterfall stays grouped with bar/bullet.
+        var isHorizontalBar = (type === 'bar' || type === 'bullet' || (type === 'waterfall' && !waterfallVertical));
         var skipGuidelines = type === 'gauge' || type === 'heatmap' || type === 'treemap' || type === 'progress' || type === 'pie' || type === 'funnel' || (type === 'bar' && render.stacked);
 
         // Bar/waterfall: render y-axis labels (category names) before the plot

@@ -190,11 +190,14 @@ neoCharts('.chart', {
 
 ![Waterfall Chart](demo/screenshots/waterfall-chart.png)
 
-Horizontal bars with cumulative offset, useful for showing sequential contributions.
+Bars with cumulative offset, useful for showing sequential contributions. Positive values step the running total up; negative values step it down.
+
+- **`waterfall.direction`** — `'horizontal'` (default: bars grow left → right, categories on the y-axis) or `'vertical'` (bars grow bottom → top, categories on the x-axis, like a column chart).
 
 ```js
 neoCharts('.chart', {
     type: 'waterfall',
+    waterfall: { direction: 'horizontal' }, // or 'vertical'
     layout: { width: '100%' },
     data: {
         series: [{
