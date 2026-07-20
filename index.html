@@ -149,8 +149,10 @@
            their aspect-ratio ring. Mirrors the editor's preview-host > chart-mount > .nc-chart rule. */
         .chart-mount > div { display: flex; flex: 1; min-width: 0; min-height: 0; }
         .chart-mount > div > .nc-chart { flex: 1; min-height: 0; }
-        /* Gauge type: three gauges in a row, vertically centered within the chart area. */
-        .chart-mount > .gauge-grid { display: flex; align-items: center; justify-content: center; gap: 24px; height: 100%; }
+        /* Gauge type: three gauges in a row, vertically centered within the chart area. The gap
+           tightens on narrow screens so all three still fit; the ring stays circular at any cell
+           width thanks to the library's square-fit rule (.nc-gauge .nc-ring in neo-charts.css). */
+        .chart-mount > .gauge-grid { display: flex; align-items: center; justify-content: center; gap: clamp(10px, 3vw, 24px); height: 100%; }
         .gauge-cell { flex: 0 1 240px; min-width: 0; height: 220px; display: flex; }
         .gauge-cell > .nc-chart { flex: 1; min-height: 0; }
 
@@ -256,6 +258,10 @@
             .demo-row .go { margin-top: 2px; }
             .maker { grid-template-columns: 1fr; gap: 44px; }
             .topnav .nav-link { display: none; }
+            /* Three gauges share a narrow row on small screens, so scale the centered value/label
+               text down to fit the smaller rings (the ring itself already shrinks to stay round). */
+            .gauge-cell .nc-gauge .nc-ring-content .nc-value { font-size: clamp(15px, 5.5vw, 30px); }
+            .gauge-cell .nc-gauge .nc-ring-content .nc-label { font-size: 9px; letter-spacing: 1px; margin-bottom: 2px; }
         }
     </style>
 </head>

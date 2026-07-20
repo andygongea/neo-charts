@@ -288,7 +288,18 @@
 .nc-gauge.nc-chart { position:relative; background-color:transparent; border-radius:16px; overflow:visible; }
 .nc-gauge .nc-title { padding:0 0 10px; color:var(--nc-text); }
 .nc-gauge .nc-plot { position:relative; flex:1; min-height:0; display:flex; align-items:center; justify-content:center; }
-.nc-gauge .nc-ring { position:relative; border-radius:50%; aspect-ratio:1; height:100%; max-width:100%; -webkit-mask:radial-gradient(circle closest-side, transparent calc(100% - var(--gauge-thickness, 14px)), #000 calc(100% - var(--gauge-thickness, 14px) + 1px)); mask:radial-gradient(circle closest-side, transparent calc(100% - var(--gauge-thickness, 14px)), #000 calc(100% - var(--gauge-thickness, 14px) + 1px)); }
+/* The ring stays a perfect circle by sizing to the SMALLER of the plot's width/height. Using
+   height:100% + max-width:100% (the old rule) let a tall-narrow plot keep full height while width
+   was clamped, producing an oval box; the `circle closest-side` mask then carved a circle to the
+   short side while the conic-gradient painted the full oval, leaking the fill past the arc. Driving
+   the size off block-size (height) with aspect-ratio:1 and capping both axes keeps it square. */
+/* The ring stays a perfect circle by fitting the largest square inside the plot. The old rule
+   (height:100% + max-width:100%) let a tall-narrow plot keep full height while width was clamped,
+   producing an OVAL box; the `circle closest-side` mask then carved a circle to the short side while
+   the conic-gradient painted the full oval, leaking the fill past the arc. Sizing off height (min of
+   100% and the plot's inline size) with aspect-ratio:1 keeps width == height in every box shape. */
+.nc-gauge .nc-ring { position:relative; border-radius:50%; aspect-ratio:1; block-size:min(100%, 100cqi); max-inline-size:100%; -webkit-mask:radial-gradient(circle closest-side, transparent calc(100% - var(--gauge-thickness, 14px)), #000 calc(100% - var(--gauge-thickness, 14px) + 1px)); mask:radial-gradient(circle closest-side, transparent calc(100% - var(--gauge-thickness, 14px)), #000 calc(100% - var(--gauge-thickness, 14px) + 1px)); }
+.nc-gauge .nc-plot { container-type:size; }
 .nc-gauge .nc-ring-content { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1; }
 .nc-gauge .nc-ring-content .nc-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:2px; color:var(--nc-text-muted); margin-bottom:4px; }
 .nc-gauge .nc-ring-content .nc-value { font-size:var(--gauge-value-size, 48px); font-weight:700; color:var(--nc-text); line-height:1; }
