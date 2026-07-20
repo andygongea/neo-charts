@@ -300,8 +300,21 @@
             var looksLikeGauge = series.length === 1 && s0.values.length === 3 && s0.labels && s0.labels[0] === 'Current';
             if (newType !== 'gauge' && looksLikeGauge) return false;
             // proportional types: must be non-negative
-            if (newType === 'pie' || newType === 'funnel' || newType === 'treemap') {
+            if (newType === 'pie' || newType === 'treemap') {
                 return series.every(function (s) { return (s.values || []).every(function (v) { return v >= 0; }); });
+            }
+            // funnel: a funnel only *looks* like a funnel when values step down. Non-negative isn't
+            // enough — carrying over column/bar data (e.g. 120,450,320,780,560) renders an hourglass.
+            // Require a single, non-negative, monotonically non-increasing series; otherwise fall back
+            // to the funnel default so the chart always demos as a funnel.
+            if (newType === 'funnel') {
+                if (series.length !== 1) return false;
+                var fv = s0.values || [];
+                for (var i = 0; i < fv.length; i++) {
+                    if (fv[i] < 0) return false;
+                    if (i > 0 && fv[i] > fv[i - 1]) return false;
+                }
+                return fv.length > 0;
             }
             return true;
         }
