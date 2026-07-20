@@ -594,7 +594,6 @@
                     heroCharts.push(neoCharts(cell, {
                         type: 'gauge',
                         theme: light ? 'light' : 'dark',
-                        animate: false,
                         title: { text: g.title, align: 'center' },
                         data: { series: [{ title: g.title, values: g.values, labels: ['Current','Min','Max'], outputValues: g.outputValues, color: g.color, suffix: '%', decimals: 0 }] }
                     }));
