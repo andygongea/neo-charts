@@ -311,7 +311,8 @@
             funnel:    [toggle('Animate', 'animate'),
                         select('Shape', 'funnel.mode', ['funnel', 'trapezoid']),
                         select('Direction', 'funnel.direction', ['vertical', 'horizontal']),
-                        toggle('Flip (wide base / reverse)', 'funnel.flip')]
+                        toggle('Flip (wide base / reverse)', 'funnel.flip'),
+                        range('Gap', 'gap', 0, 12, 1)]
         };
 
         // Mirrors the library's renderLegend logic: would a legend actually appear?

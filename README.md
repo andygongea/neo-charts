@@ -360,6 +360,8 @@ Three options control the funnel's orientation and shape:
 - **`funnel.flip`** — `false` (default) or `true` to mirror the flow axis. Flipping a vertical funnel produces a **pyramid** (narrow top, wide base); flipping a horizontal funnel reverses it to right → left.
 - **`funnel.mode`** — `'funnel'` (default) or `'trapezoid'`. The **trapezoid** mode gives the chart **straight sides**: the silhouette runs in a straight line from the first value's width to the last value's width (intermediate values set each band's color but not the outline). It honors `funnel.direction` and `funnel.flip` exactly like the default mode. As a convenience, **`type: 'trapezoid'`** is accepted as an alias for `type: 'funnel'` with `funnel.mode: 'trapezoid'`.
 
+The top-level `gap` option (default `2`) spaces the bands along the flow axis. Band edges still line up across the gap, so the silhouette stays readable; set `gap: 0` for a flush, continuous shape.
+
 ```js
 neoCharts('.chart', {
     type: 'funnel',
@@ -393,7 +395,7 @@ neoCharts('.chart', {
 | `gradient` | boolean | `true` | Apply a subtle gradient fade to data fills (column, bar, progress, waterfall, treemap, funnel, pie/donut). Set `false` for flat solid fills. |
 | `smooth` | boolean | `false` | Use smooth curves for line/area charts. Smoothing renders 8 interpolated segments per data point — since every segment is a DOM element, keep line/area datasets to a few hundred points for best performance. |
 | `fit` | boolean | `false` | Progress only: stretch the progress track to fill the container height. No effect on other chart types. |
-| `gap` | number | `2` | Gap in pixels between chart items. Applies to `column`, `bar`, `bullet`, `waterfall`, `treemap`, `heatmap`, and `donut` (spacing between slices; donut only — ignored on a full pie). |
+| `gap` | number | `2` | Gap in pixels between chart items. Applies to `column`, `bar`, `bullet`, `waterfall`, `treemap`, `heatmap`, `funnel` (spacing between bands; set `0` for a flush silhouette), and `donut` (spacing between slices; donut only — ignored on a full pie). |
 | `theme` | string | `'dark'` | Color theme: `'dark'` or `'light'` |
 | `gauge.thickness` | number | `14` | Gauge ring thickness in pixels |
 | `gauge.valueFontSize` | number | `48` | Gauge value font size in pixels |

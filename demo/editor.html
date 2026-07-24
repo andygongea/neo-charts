@@ -454,6 +454,7 @@
                 out.push(selectCtrl('Shape', 'funnel.mode', ['funnel','trapezoid']));
                 out.push(selectCtrl('Direction', 'funnel.direction', ['vertical','horizontal']));
                 out.push(toggleCtrl('Flip (pyramid / reverse)', 'funnel.flip', false));
+                out.push(rangeCtrl('Gap', 'gap', 0, 12, 1, 2));
             }
             if (t === 'bullet') {
                 out.push(numListCtrl('Targets', 'bullet.targets'));

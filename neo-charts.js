@@ -404,8 +404,11 @@
         // Cap the total entry stagger so large datasets still finish animating in ~1.2s instead of
         // trailing for many seconds (i*0.05s uncapped means a 200-point chart takes 10s to settle).
         function delay(i) {
-            var d = Math.min(i * ANIMATION_STAGGER, ANIMATION_STAGGER_MAX);
-            return 'animation-delay:' + d.toFixed(2) + 's;';
+            var d = Math.min(i * ANIMATION_STAGGER, ANIMATION_STAGGER_MAX).toFixed(2);
+            // --nc-delay mirrors the delay as an inherited custom property so descendants (e.g.
+            // value labels that fade in after their bar finishes growing) can derive their own
+            // animation-delay from the item's stagger via calc() in the stylesheet.
+            return 'animation-delay:' + d + 's;--nc-delay:' + d + 's;';
         }
 
         // Every interactive data element carries these. tabindex makes it keyboard-reachable so
@@ -1530,6 +1533,10 @@
         if (type === 'gauge') {
             // Coerce to numbers so a string can't break out of the style attribute.
             plotStyle = ' style="--gauge-thickness:' + num(config.gauge.thickness, 14) + 'px;--gauge-value-size:' + num(config.gauge.valueFontSize, 48) + 'px"';
+        } else if (type === 'funnel' && gap > 0) {
+            // Flex gap between bands; works for both directions since the plot flips flex-direction.
+            // Band edges still meet across the gap — adjacent bands share boundary widths.
+            plotStyle = ' style="gap:' + gap + 'px"';
         }
         // The plot is the visual-only surface: mark it role="img" with the chart's aria-label and
         // hide its inner nodes from AT (the real data is exposed by the SR table appended below).
@@ -2024,8 +2031,11 @@
             var n = wraps.length;
             if (!n) return;
             var horizontal = config.funnel.direction === 'horizontal';
-            var extent = horizontal ? plot.clientWidth : plot.clientHeight;
-            var base = Math.floor(extent / n);
+            // Subtract the flex gaps before dividing — sizing bands from the raw extent would
+            // overflow the plot and feed the ResizeObserver a growing chart every frame.
+            var totalGap = gap > 0 ? gap * (n - 1) : 0;
+            var extent = (horizontal ? plot.clientWidth : plot.clientHeight) - totalGap;
+            var base = Math.max(0, Math.floor(extent / n));
             for (var i = 0; i < n; i++) {
                 var wrap = wraps[i];
                 wrap.style.flex = 'none';
@@ -2047,17 +2057,13 @@
 
         if (type === 'column') {
             var colCanvas = element.querySelector('.nc-plot');
-            // Cache the item NodeList once (the DOM is stable between render and destroy) instead of
-            // re-querying every resize frame.
-            var colItems = colCanvas.querySelectorAll('.nc-item');
             sizeColumns(colCanvas);
 
+            // Items only transition opacity/filter (see CSS), never the left/width/height written
+            // here, so resizes snap without the old transition-disable + forced-reflow dance.
             observeResize(function () {
-                colItems.forEach(function (el) { el.style.transition = 'none'; });
                 sizeColumns(colCanvas);
                 toggleLegend(element);
-                colCanvas.offsetHeight;
-                colItems.forEach(function (el) { el.style.transition = ''; });
             });
         }
 
@@ -2098,28 +2104,28 @@
                         return children.indexOf(el);
                     }
 
+                    // Only opacity is written here — the .25s transition lives in the stylesheet
+                    // (base rules), so the dim AND the restore both ease. Setting/removing an
+                    // inline transition alongside the opacity (the old approach) made hlClear
+                    // snap: the transition vanished in the same style recalc as the value change.
                     function hlDimLabels(idx) {
                         for (var i = 0; i < hlLabels.length; i++) {
                             hlLabels[i].style.opacity = i === idx ? '1' : '.3';
-                            hlLabels[i].style.transition = 'opacity .25s';
                         }
                     }
 
                     function hlDimItems(idx) {
                         for (var i = 0; i < hlChildren.length; i++) {
                             hlChildren[i].style.opacity = i === idx ? '1' : '.3';
-                            hlChildren[i].style.transition = 'opacity .25s';
                         }
                     }
 
                     function hlClear() {
                         for (var i = 0; i < hlLabels.length; i++) {
                             hlLabels[i].style.opacity = '';
-                            hlLabels[i].style.transition = '';
                         }
                         for (var i = 0; i < hlChildren.length; i++) {
                             hlChildren[i].style.opacity = '';
-                            hlChildren[i].style.transition = '';
                         }
                     }
 
@@ -2171,17 +2177,14 @@
             positionDots(canvas, dots);
             positionAreaFills(canvas);
 
-            // Segments now animate via `transform` only (compositor-friendly), so the old
-            // transition-disable + forced-reflow dance is unnecessary. Dots still use left/top; keep
-            // their transitions suppressed during resize so they snap instead of lagging.
+            // Segments and dots both snap on resize: segments have no transform transition (CSS),
+            // and dots move via left/top which are never transitioned. No suppression dance (and
+            // no forced reflow) needed — the handler is pure writes plus the reads above.
             observeResize(function () {
-                dots.forEach(function (d) { d.style.transition = 'none'; });
                 positionSegments(canvas, segs);
                 positionDots(canvas, dots);
                 positionAreaFills(canvas);
                 toggleLegend(element);
-                canvas.offsetHeight;
-                dots.forEach(function (d) { d.style.transition = ''; });
             });
         }
 
@@ -2299,9 +2302,12 @@
             if (config.animate && !pieReduceMotion && typeof requestAnimationFrame !== 'undefined') {
                 var pieSweepStart = null;
                 function animatePieSweep(ts) {
-                    if (pieSweepStart === null) pieSweepStart = ts;
+                    // The gap angle depends only on the rendered radius, which is stable for the
+                    // 900ms of the sweep — measure it ONCE on the first frame. Recomputing per
+                    // frame forced a synchronous layout every frame (style write + rect read),
+                    // the classic layout-thrash pattern.
+                    if (pieSweepStart === null) { pieSweepStart = ts; pieGapDeg = computeGapDeg(); }
                     var p = Math.min((ts - pieSweepStart) / PIE_SWEEP_DURATION, 1);
-                    pieGapDeg = computeGapDeg();
                     var sweepDeg = easeOutCubic(p) * 360;
                     pieRing.style.background = pieSheen + 'conic-gradient(from 0deg,' + pieSweepStops(pieSerie, pieTotal, pieGapDeg, sweepDeg) + ')';
                     if (p < 1) { pieSweepId = requestAnimationFrame(animatePieSweep); }
